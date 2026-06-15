@@ -51,11 +51,8 @@ function signedIn(userId = USER_ID) {
 
 const validInput = {
   title: "Live de Inverno",
-  // subtitle: "",
-  // store: "C&A",
   liveDate: "2026-06-20",
   liveTime: "20:00",
-  // platform: "Instagram",
   slug: "live-de-inverno",
 };
 

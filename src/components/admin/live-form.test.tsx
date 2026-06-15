@@ -67,11 +67,8 @@ describe("LiveForm", () => {
         liveId="22222222-2222-4222-a222-222222222222"
         initialValues={{
           title: "Live de Inverno",
-          // subtitle: "Promoções",
-          // store: "C&A",
           liveDate: "2026-06-20",
           liveTime: "20:00",
-          // platform: "Instagram",
           coverImageUrl: "https://cdn.exemplo.com/live.jpg",
           instagramUrl: "https://www.instagram.com/pam",
           slug: "live-de-inverno",

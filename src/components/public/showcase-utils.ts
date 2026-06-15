@@ -44,9 +44,3 @@ export function buildWhatsAppShareUrl(url: string): string {
     `Olha os produtos desta live: ${url}`,
   )}`;
 }
-
-export function productCtaLabel(store: string): string {
-  return store.trim().toLocaleLowerCase("pt-BR").includes("c&a")
-    ? "Ver na C&A"
-    : "Ver produto";
-}

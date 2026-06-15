@@ -81,11 +81,8 @@ describe("getPublishedShowcaseByHandle", () => {
     const live = {
       id: "live-1",
       title: "Live C&A",
-      // subtitle: null,
-      // store: "C&A",
       liveDate: "2026-06-20",
       liveTime: "20:00",
-      // platform: "Instagram",
       coverImageUrl: "https://cdn.exemplo.com/live.jpg",
       instagramUrl: "https://www.instagram.com/pam",
       slug: "live-ca",

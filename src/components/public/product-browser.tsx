@@ -13,7 +13,6 @@ import {
 
 type ProductBrowserProps = {
   products: PublicProduct[];
-  // store: string;
 };
 
 const ALL = "Tudo";
@@ -89,7 +88,6 @@ export function ProductBrowser({ products }: ProductBrowserProps) {
             <PublicProductCard
               key={product.id}
               product={product}
-              // store={store}
               priority={index < 2}
             />
           ))}

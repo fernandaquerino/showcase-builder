@@ -91,7 +91,7 @@ src/
 `User ──< Live ──< Product`
 
 - **users**: `id, email, name, handle (unique slug), avatar_url, password_hash?, created_at`
-- **lives**: `id, user_id, title, subtitle?, store, live_date, live_time?, platform?, slug, status('draft'|'published'), published_at?, timestamps` — unique `(user_id, slug)`
+- **lives**: `id, user_id, title, live_date, live_time?, cover_image_url?, instagram_url?, slug, status('draft'|'published'), published_at?, timestamps` — unique `(user_id, slug)`
 - **products**: `id, live_id, name, category, size?, color?, image_url, product_url, price?, position, source_url?, created_at`
 
 Categories are a free-text field on each product. Public filters are derived at runtime from distinct `category` values — there is no categories table.

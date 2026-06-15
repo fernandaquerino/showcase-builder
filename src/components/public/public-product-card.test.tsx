@@ -17,7 +17,7 @@ const product = {
 
 describe("PublicProductCard", () => {
   it("renders product details, formatted price and a safe external link", () => {
-    render(<PublicProductCard product={product} store="C&A" />);
+    render(<PublicProductCard product={product} />);
 
     expect(screen.getByText("Jaqueta preta")).toBeInTheDocument();
     expect(screen.getByText("Jaquetas")).toBeInTheDocument();
@@ -28,7 +28,7 @@ describe("PublicProductCard", () => {
       product.imageUrl,
     );
 
-    const link = screen.getByRole("link", { name: /Ver na C&A/ });
+    const link = screen.getByRole("link", { name: /Ver produto Jaqueta preta/ });
     expect(link).toHaveAttribute("href", product.productUrl);
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer sponsored");
@@ -38,7 +38,6 @@ describe("PublicProductCard", () => {
     render(
       <PublicProductCard
         product={{ ...product, size: null, color: null, price: null }}
-        store="Loja"
       />,
     );
 

@@ -8,17 +8,14 @@ import { Button } from "@/components/ui/button";
 import { formatBrlPrice } from "@/lib/price";
 import { cn } from "@/lib/utils";
 import type { PublicProduct } from "@/server/db/queries/public-showcase";
-import { productCtaLabel } from "./showcase-utils";
 
 type PublicProductCardProps = {
   product: PublicProduct;
-  // store: string;
   priority?: boolean;
 };
 
 export function PublicProductCard({
   product,
-  // store,
   priority = false,
 }: PublicProductCardProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
@@ -73,10 +70,10 @@ export function PublicProductCard({
               href={product.productUrl}
               target="_blank"
               rel="noopener noreferrer sponsored"
-              aria-label={`${product.name}`}
+              aria-label={`Ver produto ${product.name}`}
             >
               <ShoppingBag className="size-4" aria-hidden="true" />
-              {/* {productCtaLabel(store)} */}
+              Ver produto
             </a>
           </Button>
         </div>

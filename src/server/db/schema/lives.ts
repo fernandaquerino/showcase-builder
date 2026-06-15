@@ -21,11 +21,8 @@ export const lives = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
-    // subtitle: text("subtitle"),
-    // store: text("store").notNull(),
     liveDate: date("live_date", { mode: "string" }).notNull(),
     liveTime: text("live_time"),
-    // platform: text("platform"),
     coverImageUrl: text("cover_image_url"),
     instagramUrl: text("instagram_url"),
     slug: text("slug").notNull(),

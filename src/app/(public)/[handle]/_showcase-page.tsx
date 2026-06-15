@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CalendarDays, Clock, ExternalLink, Store, Video } from "lucide-react";
+import { CalendarDays, Clock, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -11,7 +11,6 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatLiveDate, formatLiveTime } from "@/lib/format";
 import { normalizeHandle } from "@/lib/handle";
@@ -143,10 +142,6 @@ function LiveInfo({ showcase }: { showcase: PublicShowcase }) {
 
   return (
     <div className="mt-6 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-      {/* <span className="inline-flex items-center gap-2">
-        <Store className="size-4" aria-hidden="true" />
-        {live.store}
-      </span> */}
       <span className="inline-flex items-center gap-2">
         <CalendarDays className="size-4" aria-hidden="true" />
         {formatLiveDate(live.liveDate)}
@@ -157,12 +152,6 @@ function LiveInfo({ showcase }: { showcase: PublicShowcase }) {
           {formatLiveTime(live.liveTime)}
         </span>
       )}
-      {/* {live.platform && (
-        <span className="inline-flex items-center gap-2">
-          <Video className="size-4" aria-hidden="true" />
-          {live.platform}
-        </span>
-      )} */}
     </div>
   );
 }
@@ -227,16 +216,6 @@ export async function PublicShowcasePageContent({
               <h1 className="mt-1 text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
                 {showcase.live?.title ?? showcase.creator.name}
               </h1>
-              {/* {showcase.live?.subtitle && (
-                <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-                  {showcase.live.subtitle}
-                </p>
-              )} */}
-              {/* {showcase.live?.platform && (
-                <Badge variant="secondary" className="mt-4">
-                  Produtos da live no {showcase.live.platform}
-                </Badge>
-              )} */}
               {showcase.live?.instagramUrl && (
                 <Button asChild variant="outline" className="mt-5">
                   <Link
@@ -267,7 +246,6 @@ export async function PublicShowcasePageContent({
             <>
               <ProductBrowser
                 products={showcase.products}
-                // store={showcase.live.store}
               />
               <ShareShowcase url={shareUrl} />
             </>

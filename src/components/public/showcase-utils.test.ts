@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   buildWhatsAppShareUrl,
   deriveCategoryOptions,
-  productCtaLabel,
   productMatchesCategory,
 } from "./showcase-utils";
 
@@ -36,8 +35,4 @@ describe("showcase utils", () => {
     );
   });
 
-  it("uses a C&A-specific CTA only for C&A stores", () => {
-    expect(productCtaLabel("C&A")).toBe("Ver na C&A");
-    expect(productCtaLabel("Outra loja")).toBe("Ver produto");
-  });
 });

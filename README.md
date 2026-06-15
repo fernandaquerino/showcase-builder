@@ -369,6 +369,98 @@ npm run db:migrate
 
 ---
 
+## Fase 4 — Capa da live e importação de produtos em lote
+
+Dois ajustes de UX focados em reduzir a fricção para a criadora.
+
+### Upload da capa da live
+
+O campo de URL da capa foi substituído por **upload de arquivo**. A criadora
+escolhe uma imagem do celular/computador; nada de copiar endereços.
+
+- **Storage:** [Vercel Blob](https://vercel.com/docs/storage/vercel-blob).
+- **Variável de ambiente** (server-only, nunca `NEXT_PUBLIC`):
+
+  ```env
+  BLOB_READ_WRITE_TOKEN=""
+  ```
+
+  Vazio desativa o upload (o restante do app continua funcionando). O token só é
+  lido no servidor.
+
+- **Formatos aceitos:** JPG, PNG, WebP. **Limite:** 5 MB.
+- **Rejeitados:** SVG, GIF, PDF, MIME inválido, arquivos acima do limite. A
+  validação roda no cliente e **de novo no servidor**, que ainda confere os
+  _magic bytes_ — um `Content-Type` forjado (ex.: SVG marcado como `image/png`)
+  é barrado.
+- **Segurança:** a rota `POST /api/lives/cover` exige sessão; o `userId` vem da
+  sessão (qualquer `userId` do cliente é ignorado); o nome do arquivo é um UUID
+  (`lives/{userId}/{uuid}.{ext}`), sem usar o nome original; o token nunca é
+  exposto e o conteúdo do arquivo nunca é logado.
+- **Campo reutilizado:** `lives.cover_image_url` (já existia). **Sem migration.**
+- **Troca/remoção seguras:** a imagem antiga só é apagada **depois** que a live é
+  salva com a nova URL (ou com `null`), nunca antes. Excluir a live remove a
+  capa do storage.
+- **Uso da capa:** card no admin, cabeçalho da página pública, Open Graph e
+  preview de compartilhamento (com _fallback_ quando não há capa).
+- **Componente:** `LiveImageUpload` (seleção, preview, upload, troca, remoção,
+  loading, erro). O submit da live fica bloqueado enquanto o upload acontece.
+
+### Importação de produtos em lote
+
+Em vez de cadastrar um produto por vez, a criadora cola **vários links de
+afiliado** e revisa cards já preenchidos.
+
+- **Entrada:** `Adicionar produtos` na seção de produtos →
+  `/admin/lives/[liveId]/products/import`. `Adicionar apenas um produto`
+  continua disponível.
+- **Campo único:** um link por linha, até **20 links por vez** (com contador).
+  Um helper puro (`parseProductLinks`) classifica cada linha como _válido_,
+  _link inválido_, _host não aceito_, _duplicado_ ou _já está na live_.
+- **Preservação do afiliado:** o link completo (com UTMs) é mantido e salvo em
+  `product_url`; nunca é trocado pela canonical.
+- **Busca em lote:** reutiliza o endpoint seguro `POST /api/products/extract`
+  (allowlist, SSRF, redirects, timeout, rate limit e cache preservados), com
+  **concorrência de 3** requisições. Há progresso geral e status por item; um
+  erro não interrompe os demais.
+- **Cards parecidos com o público:** imagem, nome, categoria, preço, cor e o
+  único campo sempre visível — **tamanho usado na live** (nunca preenchido
+  automaticamente; tamanhos extraídos viram apenas sugestão).
+- **Pronto vs. precisa de revisão:** _pronto_ exige nome, imagem, categoria e
+  link; do contrário pede revisão. A edição completa abre num **Sheet** (tela
+  cheia no mobile, lateral no desktop) e é exceção. **Não há upload de imagem de
+  produto** — a imagem do produto continua por URL (com fallback manual).
+- **Retry:** itens com falha têm `Tentar novamente` (só aquele item) e
+  `Preencher manualmente`.
+- **Duplicados:** detectados por link/URL normalizada e contra os produtos já na
+  live; não começam selecionados.
+- **Seleção:** produtos prontos começam selecionados; incompletos/falhos não.
+- **Estado temporário:** a revisão é mantida em `sessionStorage` (por live, sem
+  HTML nem tokens). Ao recarregar, oferece _continuar_ ou _descartar_.
+- **Salvamento:** `createProductsBatchAction` recebe só os itens prontos e
+  selecionados, revalida sessão/propriedade, re-valida cada produto, recalcula a
+  posição no servidor (mantém a ordem original, anexando ao final) e grava num
+  **único insert atômico** (rollback se algum item falhar). Em seguida revalida
+  o admin e a página pública (se publicada) e limpa o estado temporário.
+- **Cancelamento:** confirma antes de descartar; nunca apaga produtos já salvos.
+
+### Dependências adicionadas (Fase 4)
+
+- `@vercel/blob` — storage da capa.
+- `@radix-ui/react-dialog` (Sheet) e `@radix-ui/react-checkbox` (seleção).
+
+### Limitações reais (após a Fase 4)
+
+- **Arquivos órfãos:** se a criadora envia uma capa e abandona o formulário sem
+  salvar, o blob pode ficar órfão (limpeza automática só ocorre em
+  troca/remoção/exclusão da live). Aceito como limitação simples.
+- **Upload de imagem de produto** continua **não implementado** (fora do escopo
+  deste ajuste) — produtos seguem por URL.
+- A detecção de duplicados por **SKU/canonical** depende do que a extração
+  retorna; sem esses dados, cai na comparação por URL.
+
+---
+
 ## 1. Visão geral
 
 ### Problema
@@ -405,7 +497,7 @@ O resultado é uma página pública, mobile-first, hospedada em URL própria (Ve
 **Gestão de lives**
 
 - Criar nova live.
-- Editar título, data, horário e loja.
+- Editar título, data, horário, capa e link do Instagram.
 - Publicar / despublicar uma live.
 
 **Produtos**
@@ -519,11 +611,10 @@ User ──< Live ──< Product
 | id                      | uuid (pk)                 |                                             |
 | user_id                 | uuid (fk → users)         |                                             |
 | title                   | text                      | ex.: "Live C&A · Pam Braga"                 |
-| subtitle                | text?                     | ex.: "Peças Mindset que eu escolhi para vc" |
-| store                   | text                      | loja, ex.: "C&A"                            |
 | live_date               | date                      | data da live                                |
 | live_time               | text?                     | horário, ex.: "20h"                         |
-| platform                | text?                     | ex.: "Instagram"                            |
+| cover_image_url         | text?                     | imagem de capa da live                      |
+| instagram_url           | text?                     | link da live/perfil no Instagram            |
 | slug                    | text                      | único por usuário; compõe a URL pública     |
 | status                  | enum('draft','published') | default `draft`                             |
 | published_at            | timestamptz?              |                                             |

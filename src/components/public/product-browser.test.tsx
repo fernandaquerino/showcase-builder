@@ -30,7 +30,7 @@ const products = [
 
 describe("ProductBrowser", () => {
   it("filters products by category and updates the counter", () => {
-    render(<ProductBrowser products={products} store="Loja" />);
+    render(<ProductBrowser products={products} />);
 
     expect(screen.getByText("2 de 2 produtos")).toBeInTheDocument();
 
@@ -45,7 +45,7 @@ describe("ProductBrowser", () => {
   });
 
   it("shows the empty live state when there are no products", () => {
-    render(<ProductBrowser products={[]} store="Loja" />);
+    render(<ProductBrowser products={[]} />);
 
     expect(
       screen.getByText("Os produtos desta live serão adicionados em breve."),

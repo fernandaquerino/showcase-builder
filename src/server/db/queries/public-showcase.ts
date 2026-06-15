@@ -19,11 +19,8 @@ export type PublicCreator = {
 export type PublicLive = {
   id: string;
   title: string;
-  // subtitle: string | null;
-  // store: string;
   liveDate: string;
   liveTime: string | null;
-  // platform: string | null;
   coverImageUrl: string | null;
   instagramUrl: string | null;
   slug: string;
@@ -77,11 +74,8 @@ export async function getPublishedShowcaseByHandle(
     columns: {
       id: true,
       title: true,
-      // subtitle: true,
-      // store: true,
       liveDate: true,
       liveTime: true,
-      // platform: true,
       coverImageUrl: true,
       instagramUrl: true,
       slug: true,

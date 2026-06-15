@@ -4,11 +4,8 @@ import { liveInputSchema } from "./live";
 
 const validInput = {
   title: "  Live de Inverno  ",
-  // subtitle: "",
-  // store: "C&A",
   liveDate: "2026-06-20",
   liveTime: "20:00",
-  // platform: "Instagram",
   coverImageUrl: "https://cdn.exemplo.com/live.jpg",
   instagramUrl: "https://www.instagram.com/criadora",
   slug: "Live de Inverno",
@@ -22,11 +19,8 @@ describe("liveInputSchema", () => {
     if (result.success) {
       expect(result.data).toEqual({
         title: "Live de Inverno",
-        // subtitle: null,
-        // store: "C&A",
         liveDate: "2026-06-20",
         liveTime: "20:00",
-        // platform: "Instagram",
         coverImageUrl: "https://cdn.exemplo.com/live.jpg",
         instagramUrl: "https://www.instagram.com/criadora",
         slug: "live-de-inverno",
@@ -37,9 +31,7 @@ describe("liveInputSchema", () => {
   it("normalizes optional empty fields to null", () => {
     const result = liveInputSchema.safeParse({
       ...validInput,
-      // subtitle: "   ",
       liveTime: "",
-      // platform: "",
       coverImageUrl: "",
       instagramUrl: "",
     });
@@ -69,11 +61,6 @@ describe("liveInputSchema", () => {
 
   it("rejects a short title", () => {
     const result = liveInputSchema.safeParse({ ...validInput, title: "ab" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects an empty store", () => {
-    const result = liveInputSchema.safeParse({ ...validInput, store: "" });
     expect(result.success).toBe(false);
   });
 

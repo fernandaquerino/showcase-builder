@@ -24,7 +24,6 @@ export default async function OpenGraphImage({
 
   const title = showcase?.live?.title ?? "Live Showcase";
   const creator = showcase?.creator.name ?? "Vitrine";
-  const store = showcase?.live?.store ?? "Produtos escolhidos";
   const date = showcase?.live ? formatLiveDate(showcase.live.liveDate) : "";
 
   return new ImageResponse(
@@ -57,7 +56,7 @@ export default async function OpenGraphImage({
           </div>
         </div>
         <div style={{ display: "flex", gap: 24, fontSize: 34 }}>
-          <span>{store}</span>
+          <span>Produtos escolhidos</span>
           {date && <span>{date}</span>}
         </div>
       </div>

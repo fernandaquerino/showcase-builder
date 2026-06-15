@@ -21,10 +21,8 @@ import {
 } from "@/lib/validations/live";
 import { createLiveAction, updateLiveAction } from "@/server/actions/lives";
 
-
 const EMPTY_VALUES: LiveFormValues = {
   title: "",
-  // subtitle: "",
   liveDate: "",
   liveTime: "",
   coverImageUrl: "",
@@ -45,15 +43,6 @@ type LiveFormProps =
       liveId: string;
       initialValues: LiveFormValues;
     };
-
-// function resolvePlatformSelect(platform: string): string {
-//   if (platform === "") {
-//     return "";
-//   }
-//   return (KNOWN_PLATFORMS as readonly string[]).includes(platform)
-//     ? platform
-//     : "Outra";
-// }
 
 export function LiveForm({
   mode,
@@ -81,9 +70,6 @@ export function LiveForm({
 
   // On create the slug tracks the title until the creator edits it by hand.
   const [slugLocked, setSlugLocked] = useState(mode === "edit");
-  // const [platformSelect, setPlatformSelect] = useState(() =>
-  //   resolvePlatformSelect(defaultValues.platform),
-  // );
 
   const title = useWatch({ control, name: "title" });
   const slug = useWatch({ control, name: "slug" });
@@ -118,13 +104,6 @@ export function LiveForm({
     });
     setSlugLocked(mode === "edit");
   }
-
-  // function handlePlatformSelect(value: string) {
-  //   setPlatformSelect(value);
-  //   setValue("platform", value === "Outra" ? "" : value, {
-  //     shouldDirty: true,
-  //   });
-  // }
 
   function applyResult(
     result: Awaited<ReturnType<typeof createLiveAction>>,
@@ -188,55 +167,7 @@ export function LiveForm({
         <FieldError id="title-error" message={errors.title?.message} />
       </div>
 
-      {/* <div className="space-y-2">
-        <Label htmlFor="subtitle">Subtítulo</Label>
-        <Textarea
-          id="subtitle"
-          aria-invalid={Boolean(errors.subtitle)}
-          aria-describedby={errors.subtitle ? "subtitle-error" : undefined}
-          {...register("subtitle")}
-        />
-        <FieldError id="subtitle-error" message={errors.subtitle?.message} />
-      </div> */}
-
       <div className="grid gap-6 sm:grid-cols-2">
-        {/* <div className="space-y-2">
-          <Label htmlFor="store">Loja</Label>
-          <Input
-            id="store"
-            placeholder="C&A"
-            aria-invalid={Boolean(errors.store)}
-            aria-describedby={errors.store ? "store-error" : undefined}
-            {...register("store")}
-          />
-          <FieldError id="store-error" message={errors.store?.message} />
-        </div> */}
-
-        {/* <div className="space-y-2">
-          <Label htmlFor="platform">Plataforma</Label>
-          <select
-            id="platform"
-            value={platformSelect}
-            onChange={(event) => handlePlatformSelect(event.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2"
-          >
-            <option value="">Selecione (opcional)</option>
-            {PLATFORM_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-          {platformSelect === "Outra" && (
-            <Input
-              aria-label="Outra plataforma"
-              placeholder="Qual plataforma?"
-              {...register("platform")}
-            />
-          )}
-          <FieldError id="platform-error" message={errors.platform?.message} />
-        </div> */}
-
         <div className="space-y-2">
           <Label htmlFor="liveDate">Data da live</Label>
           <Input
