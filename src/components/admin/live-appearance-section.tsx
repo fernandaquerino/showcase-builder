@@ -530,13 +530,14 @@ export function LiveAppearanceSection({
             </div>
           </fieldset>
 
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="grid gap-2 sm:grid-cols-2">
             <Button
               type="button"
               onClick={() => saveTheme()}
               loading={isPending}
               disabled={!isDirty || !contrast.valid}
               fullWidth
+              className="min-w-0"
             >
               <Save className="size-4" aria-hidden="true" />
               Salvar aparência
@@ -547,6 +548,7 @@ export function LiveAppearanceSection({
               onClick={resetTheme}
               disabled={isPending}
               fullWidth
+              className="min-w-0"
             >
               <RotateCcw className="size-4" aria-hidden="true" />
               Restaurar tema padrão
@@ -567,7 +569,7 @@ export function LiveAppearanceSection({
               >
                 <Smartphone className="size-4" aria-hidden="true" />
               </Button>
-              <Button
+              {/* <Button
                 type="button"
                 variant={device === "desktop" ? "secondary" : "ghost"}
                 size="icon-sm"
@@ -575,7 +577,7 @@ export function LiveAppearanceSection({
                 onClick={() => setDevice("desktop")}
               >
                 <Monitor className="size-4" aria-hidden="true" />
-              </Button>
+              </Button> */}
             </div>
           </div>
           <ThemePreview
