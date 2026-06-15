@@ -1,4 +1,7 @@
+"use client";
+
 import { LogOut } from "lucide-react";
+import { signOut } from "next-auth/react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -9,7 +12,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { logoutAction } from "@/server/actions/auth/logout";
 
 function getInitials(name: string) {
   return name
@@ -46,13 +48,15 @@ export function UserMenu({ name, email, image }: UserMenuProps) {
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <form action={logoutAction} className="w-full">
-            <button type="submit" className="flex w-full items-center gap-2">
-              <LogOut className="size-4" aria-hidden="true" />
-              Sair
-            </button>
-          </form>
+        <DropdownMenuItem
+          className="cursor-pointer gap-2"
+          onSelect={(event) => {
+            event.preventDefault();
+            void signOut({ redirectTo: "/" });
+          }}
+        >
+          <LogOut className="size-4" aria-hidden="true" />
+          Sair
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

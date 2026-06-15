@@ -57,6 +57,8 @@ export default async function EditLivePage({
     liveDate: live.liveDate,
     liveTime: live.liveTime ?? "",
     platform: live.platform ?? "",
+    coverImageUrl: live.coverImageUrl ?? "",
+    instagramUrl: live.instagramUrl ?? "",
     slug: live.slug,
   };
 

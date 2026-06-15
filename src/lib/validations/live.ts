@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { slugify } from "@/lib/slug";
+import { isSafeHttpUrl } from "@/lib/url";
 
 /** Suggested platforms for the form select. Stored as free text in the DB. */
 export const PLATFORM_OPTIONS = [
@@ -27,6 +28,33 @@ const optionalText = (max: number, message: string) =>
     .trim()
     .max(max, message)
     .transform((value) => (value === "" ? null : value));
+
+const optionalUrl = (message: string) =>
+  z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => (!value || value === "" ? null : value))
+    .refine((value) => value === null || isSafeHttpUrl(value), message);
+
+function isInstagramUrl(value: string): boolean {
+  if (!isSafeHttpUrl(value)) {
+    return false;
+  }
+
+  const { hostname } = new URL(value);
+  return hostname === "instagram.com" || hostname.endsWith(".instagram.com");
+}
+
+const optionalInstagramUrl = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (!value || value === "" ? null : value))
+  .refine(
+    (value) => value === null || isInstagramUrl(value),
+    "Cole um link do Instagram válido (http/https).",
+  );
 
 const titleSchema = z
   .string()
@@ -75,6 +103,8 @@ export const liveInputSchema = z.object({
   liveDate: liveDateSchema,
   liveTime: liveTimeSchema,
   platform: optionalText(40, "A plataforma deve ter no máximo 40 caracteres."),
+  coverImageUrl: optionalUrl("Cole um link de imagem válido (http/https)."),
+  instagramUrl: optionalInstagramUrl,
   slug: slugSchema,
 });
 

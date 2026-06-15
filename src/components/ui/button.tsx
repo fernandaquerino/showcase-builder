@@ -98,7 +98,7 @@ export function Button({
 }: ButtonProps) {
   const classes = cn(
     "relative inline-flex shrink-0 select-none items-center justify-center gap-2",
-    "whitespace-nowrap font-semibold",
+    "whitespace-nowrap font-semibold cursor-pointer",
     "transition-[background-color,border-color,color,box-shadow,transform]",
     "duration-200 ease-out",
     "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20",

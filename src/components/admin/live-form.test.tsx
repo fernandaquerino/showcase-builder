@@ -23,6 +23,8 @@ describe("LiveForm", () => {
     expect(screen.getByLabelText("Título")).toBeInTheDocument();
     expect(screen.getByLabelText("Loja")).toBeInTheDocument();
     expect(screen.getByLabelText("Data da live")).toBeInTheDocument();
+    expect(screen.getByLabelText("Imagem da live")).toBeInTheDocument();
+    expect(screen.getByLabelText("Link do Instagram")).toBeInTheDocument();
     expect(screen.getByLabelText("Endereço da página")).toBeInTheDocument();
   });
 
@@ -67,6 +69,8 @@ describe("LiveForm", () => {
           liveDate: "2026-06-20",
           liveTime: "20:00",
           platform: "Instagram",
+          coverImageUrl: "https://cdn.exemplo.com/live.jpg",
+          instagramUrl: "https://www.instagram.com/pam",
           slug: "live-de-inverno",
         }}
       />,
@@ -76,6 +80,12 @@ describe("LiveForm", () => {
     expect(screen.getByLabelText("Loja")).toHaveValue("C&A");
     expect(screen.getByLabelText("Endereço da página")).toHaveValue(
       "live-de-inverno",
+    );
+    expect(screen.getByLabelText("Imagem da live")).toHaveValue(
+      "https://cdn.exemplo.com/live.jpg",
+    );
+    expect(screen.getByLabelText("Link do Instagram")).toHaveValue(
+      "https://www.instagram.com/pam",
     );
   });
 

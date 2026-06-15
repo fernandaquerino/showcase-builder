@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const usersFindFirst = vi.hoisted(() => vi.fn());
 const livesFindFirst = vi.hoisted(() => vi.fn());
 const orderedProducts = vi.hoisted(() => vi.fn());
-const unstableCache = vi.hoisted(() => vi.fn((callback: () => unknown) => callback));
+const unstableCache = vi.hoisted(() =>
+  vi.fn((callback: () => unknown) => callback),
+);
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({
@@ -84,6 +86,8 @@ describe("getPublishedShowcaseByHandle", () => {
       liveDate: "2026-06-20",
       liveTime: "20:00",
       platform: "Instagram",
+      coverImageUrl: "https://cdn.exemplo.com/live.jpg",
+      instagramUrl: "https://www.instagram.com/pam",
       slug: "live-ca",
       publishedAt: new Date("2026-06-20T20:00:00Z"),
     };

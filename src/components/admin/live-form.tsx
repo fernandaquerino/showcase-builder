@@ -31,6 +31,8 @@ const EMPTY_VALUES: LiveFormValues = {
   liveDate: "",
   liveTime: "",
   platform: "",
+  coverImageUrl: "",
+  instagramUrl: "",
   slug: "",
 };
 
@@ -259,6 +261,51 @@ export function LiveForm({
             {...register("liveTime")}
           />
           <FieldError id="liveTime-error" message={errors.liveTime?.message} />
+        </div>
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="coverImageUrl">Imagem da live</Label>
+          <Input
+            id="coverImageUrl"
+            type="url"
+            inputMode="url"
+            placeholder="https://..."
+            aria-invalid={Boolean(errors.coverImageUrl)}
+            aria-describedby="coverImageUrl-help coverImageUrl-error"
+            {...register("coverImageUrl")}
+          />
+          <p
+            id="coverImageUrl-help"
+            className="text-sm text-muted-foreground"
+          >
+            Use uma imagem pública para deixar a página mais bonita.
+          </p>
+          <FieldError
+            id="coverImageUrl-error"
+            message={errors.coverImageUrl?.message}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="instagramUrl">Link do Instagram</Label>
+          <Input
+            id="instagramUrl"
+            type="url"
+            inputMode="url"
+            placeholder="https://www.instagram.com/seu-perfil"
+            aria-invalid={Boolean(errors.instagramUrl)}
+            aria-describedby="instagramUrl-help instagramUrl-error"
+            {...register("instagramUrl")}
+          />
+          <p id="instagramUrl-help" className="text-sm text-muted-foreground">
+            Opcional. Vamos mostrar um botão na página pública.
+          </p>
+          <FieldError
+            id="instagramUrl-error"
+            message={errors.instagramUrl?.message}
+          />
         </div>
       </div>
 

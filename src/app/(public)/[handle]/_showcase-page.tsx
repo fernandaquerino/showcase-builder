@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CalendarDays, Clock, Store, Video } from "lucide-react";
+import { CalendarDays, Clock, ExternalLink, Store, Video } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -86,7 +86,9 @@ function metadataForShowcase(
   const description =
     showcase.live.subtitle ??
     "Confira os produtos, tamanhos, cores e links de compra apresentados nesta live.";
-  const image = showcase.products.find((product) => product.imageUrl)?.imageUrl;
+  const image =
+    showcase.live.coverImageUrl ??
+    showcase.products.find((product) => product.imageUrl)?.imageUrl;
 
   return {
     title,
@@ -194,8 +196,20 @@ export async function PublicShowcasePageContent({
       </a>
 
       <div className="mx-auto w-full max-w-5xl px-5 py-6 sm:px-8 sm:py-10">
-        <header className="rounded-[2rem] border bg-card p-5 shadow-sm sm:p-8">
-          <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+        <header className="overflow-hidden rounded-[2rem] border bg-card shadow-sm">
+          {showcase.live?.coverImageUrl && (
+            <div className="aspect-[16/9] w-full overflow-hidden bg-muted sm:aspect-[3/1]">
+              {/* Remote creator-provided image URL; keep native img to avoid an unrestricted next/image proxy. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={showcase.live.coverImageUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
+
+          <div className="flex flex-col items-start gap-5 p-5 sm:flex-row sm:items-center sm:p-8">
             <Avatar className="size-20 border bg-secondary">
               {showcase.creator.avatarUrl && (
                 <AvatarImage
@@ -225,10 +239,24 @@ export async function PublicShowcasePageContent({
                   Produtos da live no {showcase.live.platform}
                 </Badge>
               )}
+              {showcase.live?.instagramUrl && (
+                <Button asChild variant="outline" className="mt-5">
+                  <Link
+                    href={showcase.live.instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="size-4" aria-hidden="true" />
+                    Ver no Instagram
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
 
-          <LiveInfo showcase={showcase} />
+          <div className="px-5 pb-5 sm:px-8 sm:pb-8">
+            <LiveInfo showcase={showcase} />
+          </div>
         </header>
 
         <div id="conteudo" className="mt-8 space-y-8">

@@ -24,6 +24,8 @@ export type PublicLive = {
   liveDate: string;
   liveTime: string | null;
   platform: string | null;
+  coverImageUrl: string | null;
+  instagramUrl: string | null;
   slug: string;
   publishedAt: Date | null;
 };
@@ -80,6 +82,8 @@ export async function getPublishedShowcaseByHandle(
       liveDate: true,
       liveTime: true,
       platform: true,
+      coverImageUrl: true,
+      instagramUrl: true,
       slug: true,
       publishedAt: true,
     },

@@ -9,6 +9,8 @@ const validInput = {
   liveDate: "2026-06-20",
   liveTime: "20:00",
   platform: "Instagram",
+  coverImageUrl: "https://cdn.exemplo.com/live.jpg",
+  instagramUrl: "https://www.instagram.com/criadora",
   slug: "Live de Inverno",
 };
 
@@ -25,6 +27,8 @@ describe("liveInputSchema", () => {
         liveDate: "2026-06-20",
         liveTime: "20:00",
         platform: "Instagram",
+        coverImageUrl: "https://cdn.exemplo.com/live.jpg",
+        instagramUrl: "https://www.instagram.com/criadora",
         slug: "live-de-inverno",
       });
     }
@@ -36,6 +40,8 @@ describe("liveInputSchema", () => {
       subtitle: "   ",
       liveTime: "",
       platform: "",
+      coverImageUrl: "",
+      instagramUrl: "",
     });
 
     expect(result.success).toBe(true);
@@ -43,7 +49,24 @@ describe("liveInputSchema", () => {
       expect(result.data.subtitle).toBeNull();
       expect(result.data.liveTime).toBeNull();
       expect(result.data.platform).toBeNull();
+      expect(result.data.coverImageUrl).toBeNull();
+      expect(result.data.instagramUrl).toBeNull();
     }
+  });
+
+  it("rejects unsafe optional URLs", () => {
+    expect(
+      liveInputSchema.safeParse({
+        ...validInput,
+        coverImageUrl: "javascript:alert(1)",
+      }).success,
+    ).toBe(false);
+    expect(
+      liveInputSchema.safeParse({
+        ...validInput,
+        instagramUrl: "https://example.com/profile",
+      }).success,
+    ).toBe(false);
   });
 
   it("rejects a short title", () => {
