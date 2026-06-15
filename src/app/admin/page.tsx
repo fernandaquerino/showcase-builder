@@ -1,19 +1,17 @@
 import type { Metadata } from "next";
-import { CalendarPlus, Sparkles } from "lucide-react";
+import { Plus, Sparkles, TriangleAlert } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { LiveEmptyState } from "@/components/admin/live-empty-state";
+import { LiveList } from "@/components/admin/live-list";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { getLivesByUserId, type Live } from "@/server/db/queries/lives";
 
 export const metadata: Metadata = {
-  title: "Admin",
+  title: "Suas lives",
 };
 
 export default async function AdminPage() {
@@ -25,42 +23,62 @@ export default async function AdminPage() {
 
   const firstName = session.user.name?.split(/\s+/)[0] ?? "criadora";
 
+  let lives: Live[] | null = null;
+
+  try {
+    lives = await getLivesByUserId(session.user.id);
+  } catch (error) {
+    console.error("Failed to load lives.", {
+      cause: error instanceof Error ? error.name : "UnknownError",
+    });
+  }
+
   return (
-    <main className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
-      <div>
-        <span className="inline-flex items-center gap-2 text-sm font-medium text-primary">
-          <Sparkles className="size-4" aria-hidden="true" />
-          Seu espaço de criação
-        </span>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-          Olá, {firstName}.
-        </h1>
-        <p className="mt-2 text-muted-foreground">@{session.user.handle}</p>
+    <main className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8 sm:py-14">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+            <Sparkles className="size-4" aria-hidden="true" />
+            Seu espaço de criação
+          </span>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+            Olá, {firstName}.
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Gerencie as lives de @{session.user.handle}.
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/admin/lives/new">
+            <Plus className="size-4" aria-hidden="true" />
+            Nova live
+          </Link>
+        </Button>
       </div>
 
-      <Card className="mt-10 border-dashed">
-        <CardHeader className="items-center text-center">
-          <span className="mb-3 flex size-14 items-center justify-center rounded-2xl bg-secondary text-primary">
-            <CalendarPlus className="size-7" aria-hidden="true" />
-          </span>
-          <CardTitle>Nenhuma live por aqui ainda</CardTitle>
-          <CardDescription className="max-w-md">
-            Na Fase 1, você poderá criar, editar e publicar suas lives a partir
-            deste painel.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center">
-          <Button disabled aria-describedby="phase-one-note">
-            Criar primeira live
-          </Button>
-        </CardContent>
-      </Card>
-      <p
-        id="phase-one-note"
-        className="mt-4 text-center text-sm text-muted-foreground"
-      >
-        Gestão de lives disponível na próxima fase.
-      </p>
+      <section className="mt-10">
+        {lives === null ? (
+          <Alert
+            aria-live="polite"
+            className="flex items-start gap-3 border-destructive/30"
+          >
+            <TriangleAlert
+              className="mt-0.5 size-4 shrink-0 text-destructive"
+              aria-hidden="true"
+            />
+            <AlertDescription>
+              <strong className="font-medium text-foreground">
+                Não foi possível carregar suas lives.
+              </strong>{" "}
+              Atualize a página e tente novamente.
+            </AlertDescription>
+          </Alert>
+        ) : lives.length === 0 ? (
+          <LiveEmptyState />
+        ) : (
+          <LiveList lives={lives} />
+        )}
+      </section>
     </main>
   );
 }

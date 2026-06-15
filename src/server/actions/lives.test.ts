@@ -1,0 +1,147 @@
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+
+import { auth } from "@/lib/auth";
+import {
+  createLiveAction,
+  deleteLiveAction,
+  publishLiveAction,
+  unpublishLiveAction,
+} from "@/server/actions/lives";
+import {
+  createLive,
+  deleteLive,
+  isLiveSlugAvailable,
+  publishLive,
+  unpublishLive,
+} from "@/server/db/queries/lives";
+
+vi.mock("@/lib/auth", () => ({ auth: vi.fn() }));
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/server/db/queries/lives", () => ({
+  createLive: vi.fn(),
+  updateLive: vi.fn(),
+  publishLive: vi.fn(),
+  unpublishLive: vi.fn(),
+  deleteLive: vi.fn(),
+  isLiveSlugAvailable: vi.fn(),
+}));
+
+// `auth` is heavily overloaded (middleware/route/RSC); treat it as a plain mock.
+const authMock = auth as unknown as Mock;
+const USER_ID = "11111111-1111-4111-a111-111111111111";
+const LIVE_ID = "22222222-2222-4222-a222-222222222222";
+
+function signedIn(userId = USER_ID) {
+  authMock.mockResolvedValue({ user: { id: userId }, expires: "" });
+}
+
+const validInput = {
+  title: "Live de Inverno",
+  subtitle: "",
+  store: "C&A",
+  liveDate: "2026-06-20",
+  liveTime: "20:00",
+  platform: "Instagram",
+  slug: "live-de-inverno",
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+describe("publishLiveAction", () => {
+  it("rejects when there is no session", async () => {
+    authMock.mockResolvedValue(null);
+
+    const result = await publishLiveAction(LIVE_ID);
+
+    expect(result.success).toBe(false);
+    expect(publishLive).not.toHaveBeenCalled();
+  });
+
+  it("publishes scoping the query to the session user", async () => {
+    signedIn();
+    vi.mocked(publishLive).mockResolvedValue({ id: LIVE_ID });
+
+    const result = await publishLiveAction(LIVE_ID);
+
+    expect(result.success).toBe(true);
+    expect(publishLive).toHaveBeenCalledWith(LIVE_ID, USER_ID);
+  });
+
+  it("returns not found when the live does not belong to the user", async () => {
+    signedIn();
+    vi.mocked(publishLive).mockResolvedValue(null);
+
+    const result = await publishLiveAction(LIVE_ID);
+
+    expect(result).toEqual({
+      success: false,
+      message: "Não encontramos essa live.",
+    });
+  });
+});
+
+describe("unpublishLiveAction", () => {
+  it("returns not found when nothing matched the owner", async () => {
+    signedIn();
+    vi.mocked(unpublishLive).mockResolvedValue(null);
+
+    const result = await unpublishLiveAction(LIVE_ID);
+
+    expect(result.success).toBe(false);
+    expect(unpublishLive).toHaveBeenCalledWith(LIVE_ID, USER_ID);
+  });
+});
+
+describe("deleteLiveAction", () => {
+  it("deletes scoped to the session user", async () => {
+    signedIn();
+    vi.mocked(deleteLive).mockResolvedValue({ id: LIVE_ID });
+
+    const result = await deleteLiveAction(LIVE_ID);
+
+    expect(result.success).toBe(true);
+    expect(deleteLive).toHaveBeenCalledWith(LIVE_ID, USER_ID);
+  });
+});
+
+describe("createLiveAction", () => {
+  it("rejects an invalid id format is irrelevant but ignores client userId", async () => {
+    signedIn();
+    vi.mocked(isLiveSlugAvailable).mockResolvedValue(true);
+    vi.mocked(createLive).mockResolvedValue({ id: LIVE_ID } as never);
+
+    const result = await createLiveAction({
+      ...validInput,
+      // @ts-expect-error attacker-supplied field must be ignored
+      userId: "attacker",
+    });
+
+    expect(result.success).toBe(true);
+    const [calledUserId] = vi.mocked(createLive).mock.calls[0];
+    expect(calledUserId).toBe(USER_ID);
+  });
+
+  it("appends a numeric suffix when the slug is taken", async () => {
+    signedIn();
+    vi.mocked(isLiveSlugAvailable)
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+    vi.mocked(createLive).mockResolvedValue({ id: LIVE_ID } as never);
+
+    await createLiveAction(validInput);
+
+    const [, payload] = vi.mocked(createLive).mock.calls[0];
+    expect(payload.slug).toBe("live-de-inverno-2");
+  });
+
+  it("rejects when there is no session", async () => {
+    authMock.mockResolvedValue(null);
+
+    const result = await createLiveAction(validInput);
+
+    expect(result.success).toBe(false);
+    expect(createLive).not.toHaveBeenCalled();
+  });
+});

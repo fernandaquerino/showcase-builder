@@ -87,8 +87,71 @@ src/
 ```
 
 O admin em `/admin` possui proteção no `src/proxy.ts` e nova verificação
-server-side em seu layout. A criação de lives e produtos começa apenas nas
-próximas fases.
+server-side em seu layout.
+
+---
+
+## Fase 1 — Gestão de lives
+
+A Fase 1 entrega o CRUD completo de lives no admin. Cada operação valida a
+sessão e a propriedade do recurso no servidor; o `user_id` vem sempre da sessão,
+nunca do cliente.
+
+### Rotas administrativas
+
+| Rota                     | Descrição                                             |
+| ------------------------ | ----------------------------------------------------- |
+| `/admin`                 | Lista as lives da pessoa autenticada (publicada primeiro, depois por atualização mais recente). |
+| `/admin/lives/new`       | Cria uma nova live como rascunho.                     |
+| `/admin/lives/[liveId]`  | Edita, publica, despublica ou exclui uma live.        |
+
+### Criar uma live
+
+1. Em `/admin`, clique em **Nova live** (ou em **Criar primeira live** no estado vazio).
+2. Preencha título, loja e data (obrigatórios); subtítulo, horário e plataforma são opcionais.
+3. O **endereço** (slug) é gerado automaticamente a partir do título e pode ser
+   editado à mão. Depois de editado, ele deixa de acompanhar o título; use
+   **Gerar do título** para regerar. A prévia mostra a URL pública futura
+   `/seu-handle/slug-da-live`.
+4. **Salvar rascunho** cria a live com status `draft` e abre a tela de edição.
+
+O slug é único por usuário. O mesmo slug pode existir para usuários diferentes.
+Em caso de colisão, um sufixo curto e previsível é aplicado (`slug-2`, `slug-3`…).
+
+### Publicar / despublicar
+
+- **Publicar** uma live a marca como `published`, preenche `published_at` e
+  **despublica automaticamente qualquer outra live publicada do mesmo usuário** —
+  apenas uma live fica publicada por vez. A operação roda em um `db.batch`
+  (transação atômica do Neon), pois o driver `neon-http` não suporta transações
+  interativas.
+- **Despublicar** (com confirmação) volta o status para `draft` e limpa
+  `published_at`.
+
+### Excluir
+
+A exclusão pede confirmação, informando o título e que a ação é irreversível
+(produtos vinculados também serão removidos via cascade quando existirem). Se a
+live estiver publicada, o aviso destaca que a publicação será removida.
+
+### Comandos de desenvolvimento, testes e qualidade
+
+```bash
+npm run dev        # servidor local
+npm run test       # vitest (utilitários, schemas, actions e componentes)
+npm run lint       # eslint
+npm run typecheck  # tsc --noEmit
+npm run build      # build de produção
+```
+
+Não há **nova migration** nesta fase: o schema de `lives` aplicado na Fase 0 já
+atende (FK com cascade, unique `(user_id, slug)` e índices por usuário/status).
+
+### Limitações atuais
+
+- Cadastro de produtos ainda não implementado (placeholder na tela de edição).
+- Página pública `[handle]` ainda não implementada.
+- Extração de links da C&A ainda não implementada.
 
 ---
 
