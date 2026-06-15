@@ -27,7 +27,22 @@ describe("productInputSchema", () => {
       imageUrl: "https://exemplo.com/imagem.jpg",
       productUrl: "https://loja.com/produto",
       price: "199.90",
+      sourceUrl: null,
     });
+  });
+
+  it("keeps a valid sourceUrl and rejects an unsafe one", () => {
+    const ok = productInputSchema.safeParse({
+      ...validInput,
+      sourceUrl: "https://minhacea.cea.com.br/?lcea=ABC",
+    });
+    expect(ok.success).toBe(true);
+
+    const bad = productInputSchema.safeParse({
+      ...validInput,
+      sourceUrl: "javascript:alert(1)",
+    });
+    expect(bad.success).toBe(false);
   });
 
   it("turns empty optional fields into null", () => {

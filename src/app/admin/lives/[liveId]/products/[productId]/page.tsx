@@ -71,6 +71,7 @@ export default async function EditProductPage({
     productUrl: product.productUrl,
     // Stored as a canonical decimal ("199.90"); show it in BR form for editing.
     price: product.price ? product.price.replace(".", ",") : "",
+    sourceUrl: product.sourceUrl ?? "",
   };
 
   return (

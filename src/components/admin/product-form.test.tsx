@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createProductAction } from "@/server/actions/products";
 import { ProductForm } from "./product-form";
@@ -31,6 +31,10 @@ const validValues = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe("ProductForm", () => {
@@ -121,5 +125,56 @@ describe("ProductForm", () => {
       expect(createProductAction).toHaveBeenCalledTimes(1);
     });
     expect(push).toHaveBeenCalledWith("/admin/lives/live-1");
+  });
+
+  it("fills empty fields from extraction but preserves typed ones", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        json: async () => ({
+          success: true,
+          data: {
+            sourceUrl: "https://loja.exemplo.com/p",
+            finalUrl: "https://loja.exemplo.com/p",
+            name: "Nome extraído",
+            imageUrl: "https://a/x.jpg",
+            price: "199.90",
+            color: "Verde",
+            fieldsFound: ["name", "imageUrl", "price", "color"],
+            extractionSource: "json-ld",
+            completeness: "complete",
+            fromCache: false,
+          },
+        }),
+      })),
+    );
+
+    render(
+      <ProductForm mode="create" liveId="live-1" categorySuggestions={[]} />,
+    );
+
+    // The creator types a name first (becomes a dirty field).
+    fireEvent.change(screen.getByLabelText("Nome do produto"), {
+      target: { value: "Meu nome" },
+    });
+
+    fireEvent.change(screen.getByLabelText("Link do produto"), {
+      target: { value: "https://loja.exemplo.com/p" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Buscar informações/ }));
+
+    // Empty field gets filled...
+    await waitFor(() => {
+      expect(screen.getByLabelText("Link da imagem")).toHaveValue(
+        "https://a/x.jpg",
+      );
+    });
+    // ...the manually typed name is preserved.
+    expect(screen.getByLabelText("Nome do produto")).toHaveValue("Meu nome");
+    expect(
+      await screen.findByText(
+        "Alguns campos que você já havia preenchido foram mantidos.",
+      ),
+    ).toBeInTheDocument();
   });
 });

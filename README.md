@@ -215,10 +215,137 @@ Não há **nova migration** nesta fase: a tabela `products` já foi criada na Fa
 
 ### Limitações atuais (após a Fase 2)
 
-- Sem extração automática por URL (C&A / JSON-LD / Open Graph).
 - Sem upload de imagens (Vercel Blob / Cloudinary).
 - Página pública `[handle]`, filtros públicos, compartilhamento e analytics
   ainda não implementados.
+
+## Fase 3 — Extração automática por link
+
+A criadora cola o link do produto, o servidor busca **nome, imagem, preço e cor**
+no HTML público da página e **preenche apenas os campos vazios** do formulário. A
+criadora confere, edita e salva. **O cadastro manual continua funcionando** mesmo
+quando a extração falha — a extração nunca bloqueia nem salva o produto.
+
+### Fluxo
+
+1. Cole o link → 2. **Buscar informações** → 3. confira a prévia → 4. complete
+categoria/tamanho/cor → 5. salve. Categoria, tamanho e estoque **não** são
+preenchidos automaticamente. Campos já digitados são preservados (via
+`dirtyFields` do React Hook Form); ao buscar de novo, o mesmo critério se aplica.
+
+### Semântica de URLs
+
+- **`sourceUrl`** — o link que a criadora colou para extração (guardado no
+  produto como proveniência).
+- **`productUrl`** — o link de compra mostrado às seguidoras; **preserva o link
+  de afiliado** colado (a extração nunca o troca pela URL final pós-redirect).
+- **URL final pós-redirects** — guardada **apenas** no cache de extração
+  (`final_url`), nunca no produto.
+
+### Endpoint
+
+`POST /api/products/extract` (runtime **Node.js**, exige autenticação). Resposta
+de sucesso traz `name/imageUrl/price/color`, `fieldsFound`, `extractionSource`
+(`json-ld` | `open-graph` | `meta` | `mixed`), `completeness` (`complete` |
+`partial`) e `fromCache`. Erros usam um `code` tipado + mensagem amigável (nunca
+HTML, SQL, stack trace, IP ou variáveis de ambiente). Status: `200` sucesso/
+parcial, `400` URL inválida, `401` sem sessão, `403` host não permitido, `404`,
+`408` timeout, `415` conteúdo não suportado, `422` sem dados, `429` rate limit,
+`502` erro/bloqueio externo.
+
+### Allowlist e variáveis de ambiente
+
+A extração só aceita **hosts exatos** configurados (sem subdomínios implícitos,
+sem `includes`). Allowlist vazia mantém a extração desativada — o cadastro manual
+segue normal. **Configure com hosts reais**, confirmados por links de afiliado;
+inclua **todos os hosts da cadeia de redirect** (o link de afiliado e o destino
+final). Nenhuma variável é `NEXT_PUBLIC`.
+
+```env
+PRODUCT_EXTRACTION_ALLOWED_HOSTS=""   # ex.: "minhacea.cea.com.br,www.cea.com.br"
+PRODUCT_EXTRACTION_TIMEOUT_MS="8000"
+PRODUCT_EXTRACTION_MAX_REDIRECTS="5"
+PRODUCT_EXTRACTION_MAX_BYTES="1048576"
+```
+
+> ⚠️ Os hosts da C&A **não** vêm preenchidos: precisam ser confirmados a partir
+> de um link de afiliado real (resolvendo `minhacea.cea.com.br/?lcea=CODE`). Sem
+> isso, a extração responde com erro seguro e o cadastro manual continua.
+
+### Proteções SSRF e limites de rede
+
+- Só `http`/`https`; rejeita credenciais embutidas, `javascript:`/`data:`/
+  `file:`/`ftp:`/`blob:`, URLs relativas e IPs privados/reservados (loopback,
+  `10/8`, `172.16/12`, `192.168/16`, `169.254/16` incl. `169.254.169.254`, IPv6
+  `::1`/link-local/unique-local) via `ipaddr.js`.
+- Redirects seguidos **manualmente** (`redirect: "manual"`), validando cada hop
+  (scheme + allowlist + resolução DNS → classificação de IP).
+- Timeout total (`AbortController`), limite de redirects e de bytes; valida
+  `Content-Type` (só HTML); **não** repassa cookies/Authorization/headers do
+  cliente, e o cliente não escolhe método, headers, timeout ou redirects.
+- **Limitação conhecida (DNS rebinding):** validamos o IP resolvido antes do
+  fetch, mas o runtime não permite "pinar" o socket no IP validado, então há uma
+  janela TOCTOU. A allowlist exata de hosts é a principal barreira.
+
+### Cache e rate limit (Postgres/Neon)
+
+- Cache em `product_extraction_cache`, chave = **SHA-256 da URL** (`url_hash`).
+  **Nunca** guarda HTML, cookies ou headers. TTL: **24h** para sucesso/parcial e
+  para "sem dados"; **10min** para erros temporários (timeout/bloqueio).
+- Rate limit em `extraction_rate_limits`: **10 tentativas/min por usuário**,
+  janela fixa, contador incrementado por upsert atômico (seguro em serverless).
+  Retorna `429` + `Retry-After`. **Cache hit válido não consome tentativa.**
+
+### Estratégias de extração (Cheerio)
+
+1. **JSON-LD** (`@type: Product`, incl. arrays, `@graph`, `@type` array, imagem
+   string/array/`{url}`, offers objeto/array/`lowPrice`) — blocos inválidos são
+   ignorados sem derrubar a extração.
+2. **Open Graph / Twitter** (`og:title`, `og:image`, `product:price:amount`,
+   `twitter:*`) como fallback — sem rebaixar um dado válido do JSON-LD.
+3. **Meta básica** (`<title>`) como último recurso; imagem só com candidato
+   confiável (melhor `null` do que errado). Fontes combinadas viram `mixed`.
+
+### Imagens
+
+URLs extraídas são validadas (só http/https) e **não** são baixadas nem
+re-hospedadas. A prévia administrativa usa `<img>` nativo com tamanho fixo e
+fallback (sem wildcard irrestrito no `next/image`, sem proxy de imagem). Hosts
+verificados podem ser adicionados a `remotePatterns` numa fase futura.
+
+### Como testar (fixtures, sem rede real)
+
+Os testes não fazem requests externos: o parser usa fixtures HTML locais e a
+camada de rede injeta `fetch`/DNS falsos. Rode `npm run test`. Há cobertura para
+parser (JSON-LD/OG/meta), SSRF/IP, redirects, safe-fetch, normalização, cache/
+rate-limit (lógica pura), endpoint e UI.
+
+### Migration
+
+Migration incremental (não destrutiva) cria `product_extraction_cache` e
+`extraction_rate_limits`. Gere com `npm run db:generate` e aplique com
+`npm run db:migrate`.
+
+### Comandos
+
+```bash
+npm run test       # vitest (inclui extração)
+npm run lint
+npm run typecheck
+npm run build
+npm run db:generate
+npm run db:migrate
+```
+
+### Limitações reais (após a Fase 3)
+
+- A extração depende do **HTML público** da loja; mudanças no site podem quebrar
+  o parser. A aplicação **não contorna** bloqueios (403/429/CAPTCHA) — nesses
+  casos volta ao cadastro manual.
+- **Headless browser não foi implementado** (proibido nesta fase); páginas
+  totalmente JS-renderizadas podem não expor dados em HTML estático.
+- **Upload de imagens** não foi implementado; imagens são apenas links.
+- **Página pública** `[handle]` ainda não existe.
 
 ---
 

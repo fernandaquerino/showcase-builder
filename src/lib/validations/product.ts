@@ -25,6 +25,15 @@ const optionalText = (max: number, message: string) =>
 const httpUrlSchema = (message: string) =>
   z.string().trim().min(1, message).refine(isSafeHttpUrl, message);
 
+/** Optional URL that becomes `null` when empty (used for the extraction origin). */
+const optionalUrlSchema = (message: string) =>
+  z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => (value && value !== "" ? value : null))
+    .refine((value) => value === null || isSafeHttpUrl(value), message);
+
 const priceSchema = z.string().transform((raw, ctx) => {
   const parsed = parseBrlPrice(raw);
 
@@ -53,6 +62,8 @@ export const productInputSchema = z.object({
   ),
   productUrl: httpUrlSchema("Cole um link de compra válido (http/https)."),
   price: priceSchema,
+  // Provenance: the link the creator pasted for extraction (may be empty).
+  sourceUrl: optionalUrlSchema("Link de origem inválido."),
 });
 
 export const productIdSchema = z.uuid("Identificador inválido.");

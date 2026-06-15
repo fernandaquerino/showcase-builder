@@ -7,6 +7,10 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 import { ProductImage } from "@/components/admin/product-image";
+import {
+  ProductLinkExtractor,
+  type ApplyExtractionResult,
+} from "@/components/admin/product-link-extractor";
 import { FieldError } from "@/components/auth/field-error";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -14,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatBrlPrice, parseBrlPrice } from "@/lib/price";
 import { isSafeHttpUrl } from "@/lib/url";
+import type { ExtractionSuccessData } from "@/lib/validations/extract";
 import {
   productInputSchema,
   type ProductFormData,
@@ -32,7 +37,19 @@ const EMPTY_VALUES: ProductFormValues = {
   imageUrl: "",
   productUrl: "",
   price: "",
+  sourceUrl: "",
 };
+
+/** Extraction fields mapped to their form targets (price shown in BR form). */
+const EXTRACTION_TARGETS: ReadonlyArray<{
+  field: "name" | "imageUrl" | "price" | "color";
+  pick: (data: ExtractionSuccessData) => string | null;
+}> = [
+  { field: "name", pick: (data) => data.name },
+  { field: "imageUrl", pick: (data) => data.imageUrl },
+  { field: "price", pick: (data) => (data.price ? data.price.replace(".", ",") : null) },
+  { field: "color", pick: (data) => data.color },
+];
 
 type ProductFormProps = {
   liveId: string;
@@ -58,17 +75,60 @@ export function ProductForm({
   const [isPending, startTransition] = useTransition();
   const categoryListId = useId();
 
+  const form = useForm<ProductFormValues, unknown, ProductFormData>({
+    resolver: zodResolver(productInputSchema),
+    defaultValues: initialValues ?? EMPTY_VALUES,
+  });
   const {
     register,
     handleSubmit,
     setError,
-    control,
+    setValue,
     getValues,
-    formState: { errors },
-  } = useForm<ProductFormValues, unknown, ProductFormData>({
-    resolver: zodResolver(productInputSchema),
-    defaultValues: initialValues ?? EMPTY_VALUES,
-  });
+    getFieldState,
+    control,
+    formState,
+  } = form;
+  const { errors } = formState;
+
+  /**
+   * Fills only empty, untouched fields from an extraction result, preserving
+   * anything the creator already typed (tracked via RHF dirty state). The
+   * affiliate link the creator pasted is kept as the buy link and stored as the
+   * extraction origin. Never saves or changes the product position.
+   */
+  function applyExtraction(data: ExtractionSuccessData): ApplyExtractionResult {
+    let filled = 0;
+    let preserved = 0;
+
+    for (const { field, pick } of EXTRACTION_TARGETS) {
+      const value = pick(data);
+      if (value === null) {
+        continue;
+      }
+
+      const current = (getValues(field) ?? "").trim();
+      const isDirty = getFieldState(field, formState).isDirty;
+
+      if (current === "" && !isDirty) {
+        setValue(field, value, { shouldDirty: false, shouldValidate: false });
+        filled += 1;
+      } else {
+        preserved += 1;
+      }
+    }
+
+    // Provenance: store the pasted link, and default the buy link to it when the
+    // creator has not provided one (preserving the affiliate URL).
+    setValue("sourceUrl", data.sourceUrl, { shouldDirty: true });
+
+    const productUrl = (getValues("productUrl") ?? "").trim();
+    if (productUrl === "" && !getFieldState("productUrl", formState).isDirty) {
+      setValue("productUrl", data.sourceUrl, { shouldValidate: true });
+    }
+
+    return { filled, preserved };
+  }
 
   const preview = useWatch({ control });
   const previewImage =
@@ -122,6 +182,13 @@ export function ProductForm({
         noValidate
         aria-busy={isPending}
       >
+        <input type="hidden" {...register("sourceUrl")} />
+
+        <ProductLinkExtractor
+          initialUrl={initialValues?.sourceUrl ?? ""}
+          onApply={applyExtraction}
+        />
+
         <div aria-live="assertive">
           {errors.root?.message && (
             <Alert className="border-destructive/30">
