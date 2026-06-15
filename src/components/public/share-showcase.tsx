@@ -64,7 +64,6 @@ export function ShareShowcase({ url, creator }: ShareShowcaseProps) {
       className="overflow-hidden rounded-3xl bg-stone-950 text-white shadow-sm"
     >
       <div className="relative p-6 sm:p-8">
-        {/* <div className="absolute right-5 top-5 hidden size-20 rounded-full border border-white/10 bg-white/10 sm:block" /> */}
         <div className="absolute right-5 top-5 hidden sm:block">
           <Avatar className="size-12 border bg-secondary">
             {creator.avatarUrl && (
