@@ -121,6 +121,41 @@ export async function createProduct(
 }
 
 /**
+ * Inserts several products at the end of the live in a single atomic statement.
+ * Positions are computed on the server from the live's current max, contiguous
+ * and in the given array order, so the original link order is preserved. A
+ * multi-row insert is all-or-nothing: if any row fails, none are persisted
+ * (rollback). Returns `null` when the live does not belong to the user.
+ */
+export async function createProductsBatch(
+  liveId: string,
+  userId: string,
+  inputs: ProductFormData[],
+): Promise<{ count: number } | null> {
+  if (inputs.length === 0) {
+    return { count: 0 };
+  }
+
+  if (!(await isLiveOwnedByUser(liveId, userId))) {
+    return null;
+  }
+
+  const start = await getNextProductPosition(liveId, userId);
+  const values = inputs.map((input, index) => ({
+    ...input,
+    liveId,
+    position: start + index,
+  }));
+
+  const inserted = await db
+    .insert(products)
+    .values(values)
+    .returning({ id: products.id });
+
+  return { count: inserted.length };
+}
+
+/**
  * Updates a product scoped to its live and owner. `position` is intentionally
  * left untouched. Returns `null` when nothing matched.
  */

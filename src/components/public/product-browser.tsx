@@ -13,12 +13,12 @@ import {
 
 type ProductBrowserProps = {
   products: PublicProduct[];
-  store: string;
+  // store: string;
 };
 
 const ALL = "Tudo";
 
-export function ProductBrowser({ products, store }: ProductBrowserProps) {
+export function ProductBrowser({ products }: ProductBrowserProps) {
   const [activeCategory, setActiveCategory] = useState(ALL);
   const categories = useMemo(() => deriveCategoryOptions(products), [products]);
   const visibleProducts = products.filter((product) =>
@@ -89,7 +89,7 @@ export function ProductBrowser({ products, store }: ProductBrowserProps) {
             <PublicProductCard
               key={product.id}
               product={product}
-              store={store}
+              // store={store}
               priority={index < 2}
             />
           ))}

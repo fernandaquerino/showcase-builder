@@ -12,13 +12,13 @@ import { productCtaLabel } from "./showcase-utils";
 
 type PublicProductCardProps = {
   product: PublicProduct;
-  store: string;
+  // store: string;
   priority?: boolean;
 };
 
 export function PublicProductCard({
   product,
-  store,
+  // store,
   priority = false,
 }: PublicProductCardProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
@@ -73,10 +73,10 @@ export function PublicProductCard({
               href={product.productUrl}
               target="_blank"
               rel="noopener noreferrer sponsored"
-              aria-label={`${productCtaLabel(store)}: ${product.name}`}
+              aria-label={`${product.name}`}
             >
               <ShoppingBag className="size-4" aria-hidden="true" />
-              {productCtaLabel(store)}
+              {/* {productCtaLabel(store)} */}
             </a>
           </Button>
         </div>

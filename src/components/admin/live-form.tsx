@@ -8,11 +8,11 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 import { FieldError } from "@/components/auth/field-error";
+import { LiveImageUpload } from "@/components/admin/live-image-upload";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { slugify } from "@/lib/slug";
 import {
   liveInputSchema,
@@ -87,6 +87,8 @@ export function LiveForm({
 
   const title = useWatch({ control, name: "title" });
   const slug = useWatch({ control, name: "slug" });
+  const coverImageUrl = useWatch({ control, name: "coverImageUrl" });
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   useEffect(() => {
     if (mode === "create" && !slugLocked) {
@@ -262,25 +264,18 @@ export function LiveForm({
 
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="coverImageUrl">Imagem da live</Label>
-          <Input
-            id="coverImageUrl"
-            type="url"
-            inputMode="url"
-            placeholder="https://..."
-            aria-invalid={Boolean(errors.coverImageUrl)}
-            aria-describedby="coverImageUrl-help coverImageUrl-error"
-            {...register("coverImageUrl")}
-          />
-          <p
-            id="coverImageUrl-help"
-            className="text-sm text-muted-foreground"
-          >
-            Use uma imagem pública para deixar a página mais bonita.
-          </p>
-          <FieldError
-            id="coverImageUrl-error"
-            message={errors.coverImageUrl?.message}
+          <Label>Imagem da live</Label>
+          {/* Keep coverImageUrl registered so the upload value participates in
+              validation and submit; the creator never edits this URL by hand. */}
+          <input type="hidden" {...register("coverImageUrl")} />
+          <LiveImageUpload
+            value={coverImageUrl?.trim() ? coverImageUrl : null}
+            onChange={(url) =>
+              setValue("coverImageUrl", url ?? "", { shouldDirty: true })
+            }
+            onUploadingChange={setIsUploadingCover}
+            disabled={isPending}
+            error={errors.coverImageUrl?.message}
           />
         </div>
 
@@ -336,7 +331,12 @@ export function LiveForm({
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row-reverse">
-        <Button type="submit" loading={isPending} loadingText="Salvando...">
+        <Button
+          type="submit"
+          loading={isPending}
+          loadingText="Salvando..."
+          disabled={isUploadingCover}
+        >
           {mode === "create" ? "Salvar rascunho" : "Salvar alterações"}
         </Button>
         <Button

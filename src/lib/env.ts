@@ -29,6 +29,10 @@ const serverEnvSchema = z
     PRODUCT_EXTRACTION_TIMEOUT_MS: numericEnv(8000),
     PRODUCT_EXTRACTION_MAX_REDIRECTS: numericEnv(5),
     PRODUCT_EXTRACTION_MAX_BYTES: numericEnv(8_388_608),
+    // Vercel Blob storage for the live cover image. Server-only (never
+    // NEXT_PUBLIC). Empty disables cover uploads (manual flow still works
+    // through the editor, but the upload button reports it's unavailable).
+    BLOB_READ_WRITE_TOKEN: optionalCredential,
   })
   .superRefine((env, context) => {
     const hasGoogleId = Boolean(env.AUTH_GOOGLE_ID);
@@ -70,6 +74,11 @@ export function getServerEnv(): ServerEnv {
 export function isGoogleAuthEnabled(): boolean {
   const env = getServerEnv();
   return Boolean(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET);
+}
+
+/** Returns the Blob token, or `null` when cover uploads are not configured. */
+export function getBlobReadWriteToken(): string | null {
+  return getServerEnv().BLOB_READ_WRITE_TOKEN ?? null;
 }
 
 export type ExtractionConfig = {

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { parseBrlPrice } from "@/lib/price";
+import { MAX_IMPORT_LINKS } from "@/lib/products/parse-links";
 import { isSafeHttpUrl } from "@/lib/url";
 import { capitalizeFirst } from "../string";
 
@@ -65,6 +66,17 @@ export const productInputSchema = z.object({
   // Provenance: the link the creator pasted for extraction (may be empty).
   sourceUrl: optionalUrlSchema("Link de origem inválido."),
 });
+
+/** Batch of products coming from the bulk import (already reviewed client-side). */
+export const productBatchInputSchema = z
+  .array(productInputSchema)
+  .min(1, "Selecione ao menos um produto para adicionar.")
+  .max(
+    MAX_IMPORT_LINKS,
+    `Você pode adicionar no máximo ${MAX_IMPORT_LINKS} produtos por vez.`,
+  );
+
+export type ProductBatchInput = z.input<typeof productBatchInputSchema>;
 
 export const productIdSchema = z.uuid("Identificador inválido.");
 

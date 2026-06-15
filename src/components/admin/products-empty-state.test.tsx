@@ -11,9 +11,18 @@ describe("ProductsEmptyState", () => {
       screen.getByText("Nenhum produto adicionado ainda"),
     ).toBeInTheDocument();
 
-    const cta = screen.getByRole("link", {
-      name: "Adicionar primeiro produto",
+    const bulkCta = screen.getByRole("link", { name: "Adicionar produtos" });
+    expect(bulkCta).toHaveAttribute(
+      "href",
+      "/admin/lives/live-1/products/import",
+    );
+
+    const singleCta = screen.getByRole("link", {
+      name: "Adicionar apenas um produto",
     });
-    expect(cta).toHaveAttribute("href", "/admin/lives/live-1/products/new");
+    expect(singleCta).toHaveAttribute(
+      "href",
+      "/admin/lives/live-1/products/new",
+    );
   });
 });

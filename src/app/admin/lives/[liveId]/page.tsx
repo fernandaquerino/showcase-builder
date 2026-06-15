@@ -52,11 +52,11 @@ export default async function EditLivePage({
 
   const initialValues: LiveFormValues = {
     title: live.title,
-    subtitle: live.subtitle ?? "",
-    store: live.store,
+    // subtitle: live.subtitle ?? "",
+    // store: live.store,
     liveDate: live.liveDate,
     liveTime: live.liveTime ?? "",
-    platform: live.platform ?? "",
+    // platform: live.platform ?? "",
     coverImageUrl: live.coverImageUrl ?? "",
     instagramUrl: live.instagramUrl ?? "",
     slug: live.slug,

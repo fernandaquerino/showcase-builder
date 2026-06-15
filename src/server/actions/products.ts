@@ -5,15 +5,18 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { revalidatePublicShowcase } from "@/server/cache/showcase";
 import {
+  productBatchInputSchema,
   productIdSchema,
   productInputSchema,
   reorderProductsSchema,
+  type ProductBatchInput,
   type ProductFormValues,
 } from "@/lib/validations/product";
 import { liveIdSchema } from "@/lib/validations/live";
 import type { ActionResult } from "@/server/actions/action-result";
 import {
   createProduct,
+  createProductsBatch,
   deleteProduct,
   getProductsByLiveIdForUser,
   reorderProducts,
@@ -85,6 +88,69 @@ export async function createProductAction(
     return { success: true, data: { liveId: parsedLiveId.data } };
   } catch (error) {
     logFailure("Create product failed.", error);
+    return { success: false, message: GENERIC_SAVE_ERROR };
+  }
+}
+
+export type BatchSaveResult =
+  | { success: true; count: number }
+  | { success: false; message: string; failedIndexes?: number[] };
+
+/**
+ * Saves several reviewed products at once. Receives only the items the creator
+ * marked ready and selected in the bulk import. The server re-validates every
+ * item, recomputes positions, and persists them in a single atomic insert so a
+ * single bad item rolls back the whole batch (nothing is saved partially).
+ */
+export async function createProductsBatchAction(
+  liveId: string,
+  input: ProductBatchInput,
+): Promise<BatchSaveResult> {
+  const userId = await getSessionUserId();
+  if (!userId) {
+    return { success: false, message: SESSION_EXPIRED };
+  }
+
+  const parsedLiveId = liveIdSchema.safeParse(liveId);
+  if (!parsedLiveId.success) {
+    return { success: false, message: LIVE_NOT_FOUND };
+  }
+
+  const parsed = productBatchInputSchema.safeParse(input);
+  if (!parsed.success) {
+    // Report which items failed so the review screen can highlight them
+    // instead of saving a partial, inconsistent batch.
+    const failedIndexes = Array.from(
+      new Set(
+        parsed.error.issues
+          .map((issue) => issue.path[0])
+          .filter((index): index is number => typeof index === "number"),
+      ),
+    ).sort((a, b) => a - b);
+
+    return {
+      success: false,
+      message:
+        "Alguns produtos ainda precisam de revisão. Nenhum produto foi adicionado.",
+      failedIndexes,
+    };
+  }
+
+  try {
+    const result = await createProductsBatch(
+      parsedLiveId.data,
+      userId,
+      parsed.data,
+    );
+    if (!result) {
+      return { success: false, message: LIVE_NOT_FOUND };
+    }
+
+    revalidateLive(parsedLiveId.data);
+    await revalidatePublicLiveIfPublished(parsedLiveId.data);
+    return { success: true, count: result.count };
+  } catch (error) {
+    logFailure("Create products batch failed.", error);
     return { success: false, message: GENERIC_SAVE_ERROR };
   }
 }

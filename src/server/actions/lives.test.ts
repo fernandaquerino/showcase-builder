@@ -6,14 +6,18 @@ import {
   deleteLiveAction,
   publishLiveAction,
   unpublishLiveAction,
+  updateLiveAction,
 } from "@/server/actions/lives";
 import {
   createLive,
   deleteLive,
+  getLiveByIdForUser,
   isLiveSlugAvailable,
   publishLive,
   unpublishLive,
+  updateLive,
 } from "@/server/db/queries/lives";
+import { deleteCoverImage } from "@/server/lib/storage/cover-image";
 
 vi.mock("@/lib/auth", () => ({ auth: vi.fn() }));
 vi.mock("next/cache", () => ({
@@ -26,10 +30,14 @@ vi.mock("@/server/db/queries/lives", () => ({
   publishLive: vi.fn(),
   unpublishLive: vi.fn(),
   deleteLive: vi.fn(),
+  getLiveByIdForUser: vi.fn(),
   isLiveSlugAvailable: vi.fn(),
 }));
 vi.mock("@/server/db/queries/public-showcase", () => ({
   getPublishedLiveContextById: vi.fn(),
+}));
+vi.mock("@/server/lib/storage/cover-image", () => ({
+  deleteCoverImage: vi.fn(),
 }));
 
 // `auth` is heavily overloaded (middleware/route/RSC); treat it as a plain mock.
@@ -43,11 +51,11 @@ function signedIn(userId = USER_ID) {
 
 const validInput = {
   title: "Live de Inverno",
-  subtitle: "",
-  store: "C&A",
+  // subtitle: "",
+  // store: "C&A",
   liveDate: "2026-06-20",
   liveTime: "20:00",
-  platform: "Instagram",
+  // platform: "Instagram",
   slug: "live-de-inverno",
 };
 
@@ -109,6 +117,62 @@ describe("deleteLiveAction", () => {
 
     expect(result.success).toBe(true);
     expect(deleteLive).toHaveBeenCalledWith(LIVE_ID, USER_ID);
+  });
+
+  it("removes the cover blob of the deleted live", async () => {
+    signedIn();
+    vi.mocked(getLiveByIdForUser).mockResolvedValue({
+      coverImageUrl: "https://blob.example.com/lives/u/abc.jpg",
+    } as never);
+    vi.mocked(deleteLive).mockResolvedValue({ id: LIVE_ID });
+
+    await deleteLiveAction(LIVE_ID);
+
+    expect(deleteCoverImage).toHaveBeenCalledWith(
+      "https://blob.example.com/lives/u/abc.jpg",
+    );
+  });
+});
+
+describe("updateLiveAction cover cleanup", () => {
+  it("deletes the previous cover only when it changed", async () => {
+    signedIn();
+    vi.mocked(isLiveSlugAvailable).mockResolvedValue(true);
+    vi.mocked(getLiveByIdForUser).mockResolvedValue({
+      coverImageUrl: "https://blob.example.com/lives/u/old.jpg",
+    } as never);
+    vi.mocked(updateLive).mockResolvedValue({
+      id: LIVE_ID,
+      status: "draft",
+      coverImageUrl: "https://blob.example.com/lives/u/new.jpg",
+    } as never);
+
+    await updateLiveAction(LIVE_ID, {
+      ...validInput,
+      coverImageUrl: "https://blob.example.com/lives/u/new.jpg",
+    });
+
+    expect(deleteCoverImage).toHaveBeenCalledWith(
+      "https://blob.example.com/lives/u/old.jpg",
+    );
+  });
+
+  it("keeps the cover when it is unchanged", async () => {
+    signedIn();
+    vi.mocked(isLiveSlugAvailable).mockResolvedValue(true);
+    const same = "https://blob.example.com/lives/u/same.jpg";
+    vi.mocked(getLiveByIdForUser).mockResolvedValue({
+      coverImageUrl: same,
+    } as never);
+    vi.mocked(updateLive).mockResolvedValue({
+      id: LIVE_ID,
+      status: "draft",
+      coverImageUrl: same,
+    } as never);
+
+    await updateLiveAction(LIVE_ID, { ...validInput, coverImageUrl: same });
+
+    expect(deleteCoverImage).not.toHaveBeenCalled();
   });
 });
 

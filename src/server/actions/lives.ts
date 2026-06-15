@@ -14,12 +14,14 @@ import type { ActionResult } from "@/server/actions/action-result";
 import {
   createLive,
   deleteLive,
+  getLiveByIdForUser,
   isLiveSlugAvailable,
   publishLive,
   unpublishLive,
   updateLive,
 } from "@/server/db/queries/lives";
 import { getPublishedLiveContextById } from "@/server/db/queries/public-showcase";
+import { deleteCoverImage } from "@/server/lib/storage/cover-image";
 
 const MAX_SLUG_ATTEMPTS = 20;
 const SESSION_EXPIRED = "Sua sessão expirou. Entre novamente.";
@@ -150,6 +152,8 @@ export async function updateLiveAction(
 
   try {
     const contextBefore = await getPublishedLiveContextById(parsedId.data);
+    const liveBefore = await getLiveByIdForUser(parsedId.data, userId);
+    const previousCover = liveBefore?.coverImageUrl ?? null;
     const slug = await resolveUniqueSlug(
       userId,
       parsed.data.slug,
@@ -167,6 +171,13 @@ export async function updateLiveAction(
 
     if (!live) {
       return { success: false, message: NOT_FOUND };
+    }
+
+    // Only after the live row is safely persisted do we remove the old cover
+    // blob — and only if it actually changed — so a failed save never orphans
+    // the live without its image.
+    if (previousCover && previousCover !== live.coverImageUrl) {
+      await deleteCoverImage(previousCover);
     }
 
     revalidateLive(live.id);
@@ -277,11 +288,14 @@ export async function deleteLiveAction(liveId: string): Promise<ActionResult> {
 
   try {
     const contextBefore = await getPublishedLiveContextById(parsedId.data);
+    const liveBefore = await getLiveByIdForUser(parsedId.data, userId);
     const live = await deleteLive(parsedId.data, userId);
 
     if (!live) {
       return { success: false, message: NOT_FOUND };
     }
+
+    await deleteCoverImage(liveBefore?.coverImageUrl ?? null);
 
     revalidateLive(live.id);
     if (contextBefore?.status === "published") {

@@ -21,9 +21,12 @@ describe("LiveForm", () => {
     render(<LiveForm mode="create" handle="pam" />);
 
     expect(screen.getByLabelText("Título")).toBeInTheDocument();
-    expect(screen.getByLabelText("Loja")).toBeInTheDocument();
     expect(screen.getByLabelText("Data da live")).toBeInTheDocument();
-    expect(screen.getByLabelText("Imagem da live")).toBeInTheDocument();
+    // The cover is now an upload control, not a URL input.
+    expect(screen.getByText("Imagem da live")).toBeInTheDocument();
+    expect(
+      screen.getByText("Adicione uma imagem para sua live"),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Link do Instagram")).toBeInTheDocument();
     expect(screen.getByLabelText("Endereço da página")).toBeInTheDocument();
   });
@@ -64,11 +67,11 @@ describe("LiveForm", () => {
         liveId="22222222-2222-4222-a222-222222222222"
         initialValues={{
           title: "Live de Inverno",
-          subtitle: "Promoções",
-          store: "C&A",
+          // subtitle: "Promoções",
+          // store: "C&A",
           liveDate: "2026-06-20",
           liveTime: "20:00",
-          platform: "Instagram",
+          // platform: "Instagram",
           coverImageUrl: "https://cdn.exemplo.com/live.jpg",
           instagramUrl: "https://www.instagram.com/pam",
           slug: "live-de-inverno",
@@ -77,11 +80,12 @@ describe("LiveForm", () => {
     );
 
     expect(screen.getByLabelText("Título")).toHaveValue("Live de Inverno");
-    expect(screen.getByLabelText("Loja")).toHaveValue("C&A");
     expect(screen.getByLabelText("Endereço da página")).toHaveValue(
       "live-de-inverno",
     );
-    expect(screen.getByLabelText("Imagem da live")).toHaveValue(
+    // The existing cover shows as a preview instead of a URL input.
+    expect(screen.getByAltText("Prévia da capa da live")).toHaveAttribute(
+      "src",
       "https://cdn.exemplo.com/live.jpg",
     );
     expect(screen.getByLabelText("Link do Instagram")).toHaveValue(

@@ -82,10 +82,8 @@ function metadataForShowcase(
     };
   }
 
-  const title = `Live ${showcase.live.store} da ${showcase.creator.name} | Produtos escolhidos`;
-  const description =
-    showcase.live.subtitle ??
-    "Confira os produtos, tamanhos, cores e links de compra apresentados nesta live.";
+  const title = `Live da ${showcase.creator.name} | Produtos escolhidos`;
+  const description = "Confira os produtos, tamanhos, cores e links de compra apresentados nesta live.";
   const image =
     showcase.live.coverImageUrl ??
     showcase.products.find((product) => product.imageUrl)?.imageUrl;
@@ -145,10 +143,10 @@ function LiveInfo({ showcase }: { showcase: PublicShowcase }) {
 
   return (
     <div className="mt-6 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-      <span className="inline-flex items-center gap-2">
+      {/* <span className="inline-flex items-center gap-2">
         <Store className="size-4" aria-hidden="true" />
         {live.store}
-      </span>
+      </span> */}
       <span className="inline-flex items-center gap-2">
         <CalendarDays className="size-4" aria-hidden="true" />
         {formatLiveDate(live.liveDate)}
@@ -159,12 +157,12 @@ function LiveInfo({ showcase }: { showcase: PublicShowcase }) {
           {formatLiveTime(live.liveTime)}
         </span>
       )}
-      {live.platform && (
+      {/* {live.platform && (
         <span className="inline-flex items-center gap-2">
           <Video className="size-4" aria-hidden="true" />
           {live.platform}
         </span>
-      )}
+      )} */}
     </div>
   );
 }
@@ -229,11 +227,11 @@ export async function PublicShowcasePageContent({
               <h1 className="mt-1 text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
                 {showcase.live?.title ?? showcase.creator.name}
               </h1>
-              {showcase.live?.subtitle && (
+              {/* {showcase.live?.subtitle && (
                 <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
                   {showcase.live.subtitle}
                 </p>
-              )}
+              )} */}
               {/* {showcase.live?.platform && (
                 <Badge variant="secondary" className="mt-4">
                   Produtos da live no {showcase.live.platform}
@@ -269,7 +267,7 @@ export async function PublicShowcasePageContent({
             <>
               <ProductBrowser
                 products={showcase.products}
-                store={showcase.live.store}
+                // store={showcase.live.store}
               />
               <ShareShowcase url={shareUrl} />
             </>

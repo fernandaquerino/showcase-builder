@@ -21,6 +21,17 @@ function LiveListItem({ handle, live }: { handle: string; live: Live }) {
 
   return (
     <Card className="flex flex-col gap-4 p-5">
+      {live.coverImageUrl && (
+        <div className="aspect-[16/9] overflow-hidden rounded-lg border bg-muted">
+          {/* eslint-disable-next-line @next/next/no-img-element -- blob/external cover URL, no optimizer wildcard. */}
+          <img
+            src={live.coverImageUrl}
+            alt={`Capa da live ${live.title}`}
+            className="size-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      )}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="truncate text-lg font-semibold">
@@ -31,21 +42,21 @@ function LiveListItem({ handle, live }: { handle: string; live: Live }) {
               {live.title}
             </Link>
           </h2>
-          {live.subtitle && (
+          {/* {live.subtitle && (
             <p className="truncate text-sm text-muted-foreground">
               {live.subtitle}
             </p>
-          )}
+          )} */}
         </div>
         <LiveStatusBadge status={live.status} />
       </div>
 
       <dl className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted-foreground">
-        <div className="flex items-center gap-1.5">
+        {/* <div className="flex items-center gap-1.5">
           <Store className="size-4" aria-hidden="true" />
           <dt className="sr-only">Loja</dt>
           <dd>{live.store}</dd>
-        </div>
+        </div> */}
         <div className="flex items-center gap-1.5">
           <CalendarDays className="size-4" aria-hidden="true" />
           <dt className="sr-only">Data</dt>
@@ -58,12 +69,12 @@ function LiveListItem({ handle, live }: { handle: string; live: Live }) {
             <dd>{time}</dd>
           </div>
         )}
-        {live.platform && (
+        {/* {live.platform && (
           <div className="flex items-center gap-1.5">
             <dt className="sr-only">Plataforma</dt>
             <dd>{live.platform}</dd>
           </div>
-        )}
+        )} */}
       </dl>
 
       <p className="text-sm text-muted-foreground">

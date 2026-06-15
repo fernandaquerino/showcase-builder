@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { auth } from "@/lib/auth";
 import {
   createProductAction,
+  createProductsBatchAction,
   deleteProductAction,
   moveProductDownAction,
   moveProductUpAction,
@@ -11,6 +12,7 @@ import {
 } from "@/server/actions/products";
 import {
   createProduct,
+  createProductsBatch,
   deleteProduct,
   getProductsByLiveIdForUser,
   reorderProducts,
@@ -24,6 +26,7 @@ vi.mock("next/cache", () => ({
 }));
 vi.mock("@/server/db/queries/products", () => ({
   createProduct: vi.fn(),
+  createProductsBatch: vi.fn(),
   updateProduct: vi.fn(),
   deleteProduct: vi.fn(),
   reorderProducts: vi.fn(),
@@ -113,6 +116,82 @@ describe("createProductAction", () => {
 
     expect(result.success).toBe(false);
     expect(createProduct).not.toHaveBeenCalled();
+  });
+});
+
+describe("createProductsBatchAction", () => {
+  const itemA = { ...validInput, name: "Produto A" };
+  const itemB = { ...validInput, name: "Produto B", price: "" };
+
+  it("rejects when there is no session", async () => {
+    authMock.mockResolvedValue(null);
+
+    const result = await createProductsBatchAction(LIVE_ID, [itemA]);
+
+    expect(result.success).toBe(false);
+    expect(createProductsBatch).not.toHaveBeenCalled();
+  });
+
+  it("saves a batch scoped to the session user and returns the count", async () => {
+    signedIn();
+    vi.mocked(createProductsBatch).mockResolvedValue({ count: 2 });
+
+    const result = await createProductsBatchAction(LIVE_ID, [itemA, itemB]);
+
+    expect(result).toEqual({ success: true, count: 2 });
+    const [liveId, userId, inputs] = vi.mocked(createProductsBatch).mock.calls[0];
+    expect(liveId).toBe(LIVE_ID);
+    expect(userId).toBe(USER_ID);
+    expect(inputs).toHaveLength(2);
+    // Normalized: empty price becomes null, comma price becomes a decimal.
+    expect(inputs[0].price).toBe("199.90");
+    expect(inputs[1].price).toBeNull();
+  });
+
+  it("ignores client-supplied userId/position on every item", async () => {
+    signedIn();
+    vi.mocked(createProductsBatch).mockResolvedValue({ count: 1 });
+
+    await createProductsBatchAction(LIVE_ID, [
+      { ...itemA, position: 7, userId: "attacker" } as never,
+    ]);
+
+    const [, , inputs] = vi.mocked(createProductsBatch).mock.calls[0];
+    expect(inputs[0]).not.toHaveProperty("position");
+    expect(inputs[0]).not.toHaveProperty("userId");
+  });
+
+  it("rolls back the whole batch and reports failed indexes on a bad item", async () => {
+    signedIn();
+
+    const result = await createProductsBatchAction(LIVE_ID, [
+      itemA,
+      { ...itemB, imageUrl: "javascript:alert(1)" },
+    ]);
+
+    expect(result.success).toBe(false);
+    expect(createProductsBatch).not.toHaveBeenCalled();
+    if (!result.success) {
+      expect(result.failedIndexes).toEqual([1]);
+    }
+  });
+
+  it("rejects an empty batch", async () => {
+    signedIn();
+
+    const result = await createProductsBatchAction(LIVE_ID, []);
+
+    expect(result.success).toBe(false);
+    expect(createProductsBatch).not.toHaveBeenCalled();
+  });
+
+  it("returns live-not-found when the live is not owned", async () => {
+    signedIn();
+    vi.mocked(createProductsBatch).mockResolvedValue(null);
+
+    const result = await createProductsBatchAction(LIVE_ID, [itemA]);
+
+    expect(result.success).toBe(false);
   });
 });
 
