@@ -3,20 +3,18 @@ import type { Metadata } from "next";
 import {
   generatePublicShowcaseMetadata,
   PublicShowcasePageContent,
-} from "./_showcase-page";
+} from "../_showcase-page";
 
-type PublicShowcasePageProps = {
-  params: Promise<{ handle: string }>;
+type PublicLivePageProps = {
+  params: Promise<{ handle: string; slug: string }>;
 };
 
 export async function generateMetadata({
   params,
-}: PublicShowcasePageProps): Promise<Metadata> {
+}: PublicLivePageProps): Promise<Metadata> {
   return generatePublicShowcaseMetadata(await params);
 }
 
-export default async function PublicShowcasePage({
-  params,
-}: PublicShowcasePageProps) {
+export default async function PublicLivePage({ params }: PublicLivePageProps) {
   return <PublicShowcasePageContent {...(await params)} />;
 }

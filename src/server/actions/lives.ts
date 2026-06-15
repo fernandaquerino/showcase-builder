@@ -149,6 +149,7 @@ export async function updateLiveAction(
   }
 
   try {
+    const contextBefore = await getPublishedLiveContextById(parsedId.data);
     const slug = await resolveUniqueSlug(
       userId,
       parsed.data.slug,
@@ -170,6 +171,9 @@ export async function updateLiveAction(
 
     revalidateLive(live.id);
     if (live.status === "published") {
+      if (contextBefore?.status === "published") {
+        revalidatePublicShowcase(contextBefore);
+      }
       await revalidatePublicLive(live.id);
     }
     return { success: true };

@@ -49,11 +49,13 @@ export type PublicShowcase = {
 export type PublishedLiveContext = {
   handle: string;
   liveId: string;
+  slug: string;
   status: "draft" | "published";
 } | null;
 
 export async function getPublishedShowcaseByHandle(
   handle: string,
+  slug?: string,
 ): Promise<PublicShowcase | null> {
   const creator = await db.query.users.findFirst({
     columns: {
@@ -82,10 +84,18 @@ export async function getPublishedShowcaseByHandle(
       publishedAt: true,
     },
     where: (table, { and }) =>
-      and(eq(table.userId, creator.id), eq(table.status, "published")),
+      and(
+        eq(table.userId, creator.id),
+        eq(table.status, "published"),
+        slug ? eq(table.slug, slug) : undefined,
+      ),
   });
 
   if (!live) {
+    if (slug) {
+      return null;
+    }
+
     return {
       creator: {
         name: creator.name,
@@ -126,10 +136,11 @@ export async function getPublishedShowcaseByHandle(
 
 export function getCachedPublishedShowcaseByHandle(
   handle: string,
+  slug?: string,
 ): Promise<PublicShowcase | null> {
   return unstable_cache(
-    () => getPublishedShowcaseByHandle(handle),
-    [`published-showcase:${handle}`],
+    () => getPublishedShowcaseByHandle(handle, slug),
+    [`published-showcase:${handle}:${slug ?? "current"}`],
     {
       revalidate: SHOWCASE_REVALIDATE_SECONDS,
       tags: [showcaseTag(handle)],
@@ -144,6 +155,7 @@ export async function getPublishedLiveContextById(
     .select({
       handle: users.handle,
       liveId: lives.id,
+      slug: lives.slug,
       status: lives.status,
     })
     .from(lives)
@@ -153,6 +165,11 @@ export async function getPublishedLiveContextById(
 
   const live = row[0];
   return live
-    ? { handle: live.handle, liveId: live.liveId, status: live.status }
+    ? {
+        handle: live.handle,
+        liveId: live.liveId,
+        slug: live.slug,
+        status: live.status,
+      }
     : null;
 }

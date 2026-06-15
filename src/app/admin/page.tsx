@@ -34,7 +34,7 @@ export default async function AdminPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-fit px-5 py-10 sm:px-8 sm:py-14">
+    <main className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <span className="inline-flex items-center gap-2 text-sm font-medium text-primary">
@@ -76,7 +76,7 @@ export default async function AdminPage() {
         ) : lives.length === 0 ? (
           <LiveEmptyState />
         ) : (
-          <LiveList lives={lives} />
+          <LiveList handle={session.user.handle} lives={lives} />
         )}
       </section>
     </main>

@@ -9,8 +9,19 @@ import { Card } from "@/components/ui/card";
 import { formatLiveDate, formatLiveTime, formatTimestamp } from "@/lib/format";
 import type { Live } from "@/server/db/queries/lives";
 
-function LiveListItem({ live }: { live: Live }) {
+function getPublicLiveUrl(handle: string, slug: string): string {
+  const base =
+    process.env.NEXTAUTH_URL ??
+    process.env.AUTH_URL ??
+    "http://localhost:3000";
+
+  return new URL(`/${handle}/${slug}`, base).href;
+}
+
+function LiveListItem({ handle, live }: { handle: string; live: Live }) {
   const time = formatLiveTime(live.liveTime);
+  const publicUrl =
+    live.status === "published" ? getPublicLiveUrl(handle, live.slug) : null;
 
   return (
     <Card className="flex flex-col gap-4 p-5">
@@ -60,11 +71,22 @@ function LiveListItem({ live }: { live: Live }) {
       </dl>
 
       <p className="text-sm text-muted-foreground">
-        Endereço:{" "}
-        <span className="font-mono text-foreground">/{live.slug}</span>
-        <span className="mx-2" aria-hidden="true">
-          ·
-        </span>
+        {publicUrl ? (
+          <>
+            Link da live:{" "}
+            <Link
+              href={publicUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              {publicUrl}
+            </Link>
+            <span className="mx-2" aria-hidden="true">
+              ·
+            </span>
+          </>
+        ) : null}
         Atualizada em {formatTimestamp(live.updatedAt)}
       </p>
 
@@ -96,12 +118,12 @@ function LiveListItem({ live }: { live: Live }) {
   );
 }
 
-export function LiveList({ lives }: { lives: Live[] }) {
+export function LiveList({ handle, lives }: { handle: string; lives: Live[] }) {
   return (
     <ul className="flex flex-col gap-4">
       {lives.map((live) => (
         <li key={live.id}>
-          <LiveListItem live={live} />
+          <LiveListItem handle={handle} live={live} />
         </li>
       ))}
     </ul>

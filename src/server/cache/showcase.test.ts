@@ -20,10 +20,15 @@ describe("showcase cache helpers", () => {
     expect(liveTag("live-1")).toBe("live:live-1");
   });
 
-  it("revalidates the public path and tags", () => {
-    revalidatePublicShowcase({ handle: "pambraga", liveId: "live-1" });
+  it("revalidates the public paths and tags", () => {
+    revalidatePublicShowcase({
+      handle: "pambraga",
+      liveId: "live-1",
+      slug: "live-ca",
+    });
 
     expect(revalidatePath).toHaveBeenCalledWith("/pambraga");
+    expect(revalidatePath).toHaveBeenCalledWith("/pambraga/live-ca");
     expect(revalidateTag).toHaveBeenCalledWith("showcase:pambraga", "max");
     expect(revalidateTag).toHaveBeenCalledWith("live:live-1", "max");
   });
