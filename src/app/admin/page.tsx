@@ -34,7 +34,7 @@ export default async function AdminPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8 sm:py-14">
+    <main className="mx-auto w-full max-w-fit px-5 py-10 sm:px-8 sm:py-14">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <span className="inline-flex items-center gap-2 text-sm font-medium text-primary">

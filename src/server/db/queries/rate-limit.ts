@@ -49,7 +49,9 @@ export async function consumeExtractionAttempt(
 }
 
 /** Best-effort cleanup of windows older than two windows. */
-export async function cleanupExpiredRateLimits(windowMs: number): Promise<void> {
+export async function cleanupExpiredRateLimits(
+  windowMs: number,
+): Promise<void> {
   const cutoff = new Date(Date.now() - windowMs * 2);
   await db
     .delete(extractionRateLimits)

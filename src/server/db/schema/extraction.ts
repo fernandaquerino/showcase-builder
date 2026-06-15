@@ -1,6 +1,7 @@
 import {
   index,
   integer,
+  jsonb,
   numeric,
   pgTable,
   primaryKey,
@@ -12,9 +13,9 @@ import {
 import { users } from "./auth";
 
 /**
- * Cache of product-extraction results, keyed by a SHA-256 of the full source
- * URL. Stores only the extracted fields — never raw HTML, cookies, headers or
- * tokens. `status` is `complete` | `partial` | `error`.
+ * Cache of product-extraction results. `urlHash` is the preferred product
+ * identity; metadata also stores alternate lookup hashes so affiliate URLs
+ * with different campaigns can share the same result.
  */
 export const productExtractionCache = pgTable(
   "product_extraction_cache",
@@ -27,6 +28,7 @@ export const productExtractionCache = pgTable(
     imageUrl: text("image_url"),
     price: numeric("price", { precision: 12, scale: 2 }),
     color: text("color"),
+    metadata: jsonb("metadata"),
     extractionSource: text("extraction_source"),
     status: text("status").notNull(),
     errorCode: text("error_code"),

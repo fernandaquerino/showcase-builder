@@ -43,7 +43,7 @@ export default async function NewProductPage({
   );
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8 sm:py-14">
+    <main className="mx-auto w-full max-w-fit px-5 py-10 sm:px-8 sm:py-14">
       <Link
         href={`/admin/lives/${live.id}`}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"

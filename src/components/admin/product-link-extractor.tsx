@@ -22,7 +22,10 @@ type ExtractorState =
 
 type ProductLinkExtractorProps = {
   initialUrl?: string;
+  mode: "create" | "edit";
   onApply: (data: ExtractionSuccessData) => ApplyExtractionResult;
+  onUrlChange: (url: string) => void;
+  onRevealForm: () => void;
 };
 
 async function requestExtraction(url: string): Promise<ExtractionResponse> {
@@ -31,13 +34,15 @@ async function requestExtraction(url: string): Promise<ExtractionResponse> {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ url }),
   });
-
   return (await response.json()) as ExtractionResponse;
 }
 
 export function ProductLinkExtractor({
   initialUrl = "",
+  mode,
   onApply,
+  onUrlChange,
+  onRevealForm,
 }: ProductLinkExtractorProps) {
   const [url, setUrl] = useState(initialUrl);
   const [state, setState] = useState<ExtractorState>({ kind: "idle" });
@@ -45,18 +50,14 @@ export function ProductLinkExtractor({
   const helpId = useId();
 
   async function runExtraction() {
-    const trimmed = url.trim();
-    if (trimmed === "" || state.kind === "loading") {
-      return;
-    }
-
+    if (url.trim() === "" || state.kind === "loading") return;
     setState({ kind: "loading" });
 
     try {
-      const result = await requestExtraction(trimmed);
-
+      const result = await requestExtraction(url);
       if (!result.success) {
         setState({ kind: "error", message: result.error.message });
+        onRevealForm();
         return;
       }
 
@@ -66,11 +67,13 @@ export function ProductLinkExtractor({
         completeness: result.data.completeness,
         preserved,
       });
+      onRevealForm();
     } catch {
       setState({
         kind: "error",
         message: extractionErrorMessage("EXTRACTION_FAILED"),
       });
+      onRevealForm();
     }
   }
 
@@ -79,53 +82,68 @@ export function ProductLinkExtractor({
   return (
     <section
       aria-labelledby={`${inputId}-heading`}
-      className="space-y-3 rounded-xl border bg-muted/30 p-4"
+      className="space-y-4 rounded-xl border bg-muted/30 p-4 sm:p-5"
     >
       <div className="space-y-1">
-        <h3 id={`${inputId}-heading`} className="font-medium">
-          Comece pelo link do produto
-        </h3>
+        <h2 id={`${inputId}-heading`} className="text-lg font-semibold">
+          Adicione um produto
+        </h2>
         <p className="text-sm text-muted-foreground">
-          Cole o link da peça. Vamos tentar preencher o nome, a foto e o preço
-          para você.
+          Cole seu link de afiliado. Vamos tentar encontrar o nome, a foto e o
+          preço para você.
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={inputId}>Link do produto</Label>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Input
-            id={inputId}
-            type="url"
-            inputMode="url"
-            placeholder="https://..."
-            value={url}
-            aria-describedby={helpId}
-            disabled={isLoading}
-            onChange={(event) => setUrl(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                void runExtraction();
-              }
-            }}
-          />
+        <Label htmlFor={inputId}>Cole seu link de afiliado</Label>
+        <Input
+          id={inputId}
+          type="url"
+          inputMode="url"
+          placeholder="https://..."
+          value={url}
+          aria-describedby={helpId}
+          disabled={isLoading}
+          className="min-h-11"
+          onChange={(event) => {
+            setUrl(event.target.value);
+            onUrlChange(event.target.value);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              void runExtraction();
+            }
+          }}
+        />
+        <p id={helpId} className="text-sm text-muted-foreground">
+          O link será mantido para suas seguidoras comprarem por ele.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button
+          type="button"
+          onClick={() => void runExtraction()}
+          loading={isLoading}
+          loadingText="Procurando o produto..."
+          disabled={url.trim() === ""}
+          className="min-h-11"
+        >
+          <Search className="size-4" aria-hidden="true" />
+          {mode === "edit" ? "Buscar informações novamente" : "Buscar produto"}
+        </Button>
+        {mode === "create" && (
           <Button
             type="button"
-            variant="outline"
-            onClick={() => void runExtraction()}
-            loading={isLoading}
-            loadingText="Procurando nome e foto..."
-            disabled={url.trim() === ""}
-            className="shrink-0"
+            variant="ghost"
+            onClick={onRevealForm}
+            disabled={isLoading}
+            className="min-h-11"
           >
-            <Search className="size-4" aria-hidden="true" />
-            Buscar informações
+            Prefiro preencher manualmente
           </Button>
-        </div>
-        <p id={helpId} className="text-sm text-muted-foreground">
-          Você confere e edita tudo antes de salvar.
-        </p>
+        )}
       </div>
 
       <div aria-live="polite">
@@ -133,17 +151,17 @@ export function ProductLinkExtractor({
           <div className="space-y-1 text-sm">
             <p className="font-medium text-foreground">
               {state.completeness === "complete"
-                ? "Informações encontradas"
-                : "Encontramos parte das informações"}
+                ? "Produto encontrado"
+                : "Encontramos algumas informações"}
             </p>
             <p className="text-muted-foreground">
               {state.completeness === "complete"
-                ? "Preenchemos alguns campos para você. Confira antes de salvar."
+                ? "Confira as informações antes de adicionar à live."
                 : "Complete os campos que ainda estão vazios."}
             </p>
             {state.preserved > 0 && (
               <p className="text-muted-foreground">
-                Alguns campos que você já havia preenchido foram mantidos.
+                Mantivemos os campos que você já tinha preenchido.
               </p>
             )}
           </div>
@@ -153,7 +171,7 @@ export function ProductLinkExtractor({
       {state.kind === "error" && (
         <div role="alert" className="space-y-1 text-sm">
           <p className="font-medium text-foreground">
-            Não conseguimos preencher automaticamente
+            Não conseguimos encontrar os dados automaticamente
           </p>
           <p className="text-muted-foreground">{state.message}</p>
         </div>

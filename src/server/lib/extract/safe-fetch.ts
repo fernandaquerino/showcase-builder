@@ -200,7 +200,10 @@ export async function fetchHtmlWithSafeRedirects(
       }
 
       const declaredLength = Number(response.headers.get("content-length"));
-      if (Number.isFinite(declaredLength) && declaredLength > options.maxBytes) {
+      if (
+        Number.isFinite(declaredLength) &&
+        declaredLength > options.maxBytes
+      ) {
         return { ok: false, code: "RESPONSE_TOO_LARGE" };
       }
 

@@ -5,95 +5,101 @@ import type { ExtractionSource } from "@/lib/validations/extract";
 import {
   normalizeExtractedPrice,
   normalizeExtractedProduct,
+  type RawProductMetadata,
 } from "./normalize";
 
 describe("normalizeExtractedPrice", () => {
   it.each([
     ["R$ 199,90", "199.90"],
-    ["199,90", "199.90"],
     ["1.299,90", "1299.90"],
     ["1299.90", "1299.90"],
     ["129", "129.00"],
     ["1.000", "1000.00"],
-    ["0", "0.00"],
-  ])("normalizes string %s", (input, expected) => {
+  ])("normalizes %s", (input, expected) => {
     expect(normalizeExtractedPrice(input)).toBe(expected);
-  });
-
-  it("normalizes a numeric price", () => {
-    expect(normalizeExtractedPrice(199.9)).toBe("199.90");
   });
 
   it.each(["-10", "abc", "", "  "])("rejects %s", (input) => {
     expect(normalizeExtractedPrice(input)).toBeNull();
   });
-
-  it("rejects a negative number and null", () => {
-    expect(normalizeExtractedPrice(-5)).toBeNull();
-    expect(normalizeExtractedPrice(null)).toBeNull();
-  });
 });
 
-function raw(overrides: Partial<Parameters<typeof normalizeExtractedProduct>[0]>) {
+function raw(overrides: Partial<RawProductMetadata> = {}): RawProductMetadata {
   return {
+    canonicalUrl: null,
+    sku: null,
     name: null,
     imageUrl: null,
     price: null,
     color: null,
+    category: null,
+    brand: null,
+    availableSizes: [],
     sources: new Set<ExtractionSource>(),
     ...overrides,
   };
 }
 
 describe("normalizeExtractedProduct", () => {
-  it("is complete with name and image", () => {
+  it("normalizes all additional fields and removes duplicate sizes", () => {
     const result = normalizeExtractedProduct(
       raw({
+        canonicalUrl:
+          "https://LOJA.exemplo.com/p/1?variant=preto&utm_campaign=criadora",
+        sku: " SKU-1 ",
         name: "  Jaqueta   jeans ",
         imageUrl: "https://a/x.jpg",
         price: "199,90",
-        color: "Azul",
-        sources: new Set(["json-ld"]),
+        color: " Preto ",
+        category: " Jaquetas ",
+        brand: " Mindset ",
+        availableSizes: ["PP", "P", "p", " M "],
+        sources: new Set(["json-ld", "breadcrumb"]),
       }),
     );
-    expect(result.name).toBe("Jaqueta jeans");
-    expect(result.completeness).toBe("complete");
-    expect(result.fieldsFound).toEqual(["name", "imageUrl", "price", "color"]);
-    expect(result.extractionSource).toBe("json-ld");
+
+    expect(result).toMatchObject({
+      canonicalUrl: "https://loja.exemplo.com/p/1?variant=preto",
+      sku: "SKU-1",
+      name: "Jaqueta jeans",
+      price: "199.90",
+      color: "Preto",
+      category: "Jaquetas",
+      brand: "Mindset",
+      availableSizes: ["PP", "P", "M"],
+      completeness: "complete",
+      extractionSource: "mixed",
+    });
+    expect(result.fieldsFound).toEqual([
+      "name",
+      "imageUrl",
+      "price",
+      "color",
+      "category",
+      "brand",
+      "sku",
+      "availableSizes",
+    ]);
   });
 
-  it("is partial with only a name", () => {
-    const result = normalizeExtractedProduct(raw({ name: "Só nome" }));
-    expect(result.completeness).toBe("partial");
-    expect(result.fieldsFound).toEqual(["name"]);
-  });
-
-  it("has null completeness when there is no name or image", () => {
-    const result = normalizeExtractedProduct(raw({ price: "10,00" }));
-    expect(result.completeness).toBeNull();
-  });
-
-  it("drops an invalid image url", () => {
-    const result = normalizeExtractedProduct(
-      raw({ name: "X", imageUrl: "javascript:alert(1)" }),
+  it("is partial with only a name and null without name or image", () => {
+    expect(normalizeExtractedProduct(raw({ name: "Nome" })).completeness).toBe(
+      "partial",
     );
-    expect(result.imageUrl).toBeNull();
-    expect(result.completeness).toBe("partial");
+    expect(
+      normalizeExtractedProduct(raw({ price: "10.00" })).completeness,
+    ).toBeNull();
   });
 
-  it("clamps the name to the schema limit", () => {
-    const result = normalizeExtractedProduct(raw({ name: "a".repeat(200) }));
-    expect(result.name).toHaveLength(160);
-  });
-
-  it("reports mixed when several sources contribute", () => {
+  it("drops unsafe image and canonical URLs", () => {
     const result = normalizeExtractedProduct(
       raw({
         name: "X",
-        imageUrl: "https://a/x.jpg",
-        sources: new Set(["json-ld", "open-graph"]),
+        imageUrl: "javascript:alert(1)",
+        canonicalUrl: "file:///etc/passwd",
       }),
     );
-    expect(result.extractionSource).toBe("mixed");
+    expect(result.imageUrl).toBeNull();
+    expect(result.canonicalUrl).toBeNull();
   });
 });

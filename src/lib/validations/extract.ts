@@ -6,11 +6,20 @@ export const EXTRACTABLE_FIELDS = [
   "imageUrl",
   "price",
   "color",
+  "category",
+  "brand",
+  "sku",
+  "availableSizes",
 ] as const;
 
 export type ExtractableField = (typeof EXTRACTABLE_FIELDS)[number];
 
-export type ExtractionSource = "json-ld" | "open-graph" | "meta" | "mixed";
+export type ExtractionSource =
+  | "json-ld"
+  | "open-graph"
+  | "breadcrumb"
+  | "meta"
+  | "mixed";
 
 export type ExtractionErrorCode =
   | "INVALID_URL"
@@ -26,12 +35,18 @@ export type ExtractionErrorCode =
   | "EXTRACTION_FAILED";
 
 export type ExtractionSuccessData = {
+  affiliateUrl: string;
+  canonicalUrl: string | null;
   sourceUrl: string;
   finalUrl: string;
+  sku: string | null;
   name: string | null;
   imageUrl: string | null;
   price: string | null;
   color: string | null;
+  category: string | null;
+  brand: string | null;
+  availableSizes: string[];
   fieldsFound: ExtractableField[];
   extractionSource: ExtractionSource;
   completeness: "complete" | "partial";
@@ -44,7 +59,11 @@ export type ExtractionResponse =
 
 /** Request body. URL safety (protocol, host, SSRF) is enforced by the guard. */
 export const extractRequestSchema = z.object({
-  url: z.string().trim().min(1, "Informe um link.").max(2048, "Link muito longo."),
+  url: z
+    .string()
+    .min(1, "Informe um link.")
+    .max(2048, "Link muito longo.")
+    .refine((value) => value.trim() !== "", "Informe um link."),
 });
 
 export type ExtractRequest = z.infer<typeof extractRequestSchema>;

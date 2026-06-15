@@ -148,9 +148,7 @@ describe("fetchHtmlWithSafeRedirects", () => {
   });
 
   it("rejects a response larger than the byte limit", async () => {
-    const fetchImpl = vi.fn(async () =>
-      htmlResponse("x".repeat(5000)),
-    );
+    const fetchImpl = vi.fn(async () => htmlResponse("x".repeat(5000)));
     const result = await fetchHtmlWithSafeRedirects(
       URL_OK,
       baseOptions({

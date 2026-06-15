@@ -9,25 +9,72 @@ const push = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, refresh: vi.fn() }),
 }));
-
 vi.mock("@/server/actions/products", () => ({
   createProductAction: vi.fn(),
   updateProductAction: vi.fn(),
 }));
-
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+const affiliateUrl =
+  "https://loja.com/produto?p=1&utm_source=mais&utm_campaign=pam";
 const validValues = {
   name: "Jaqueta jeans oversized",
   category: "Jaquetas",
   size: "M",
   color: "Azul claro",
   imageUrl: "https://exemplo.com/imagem.jpg",
-  productUrl: "https://loja.com/produto",
+  productUrl: affiliateUrl,
   price: "199,90",
+  sourceUrl: affiliateUrl,
 };
+
+function extractionData(overrides: Record<string, unknown> = {}) {
+  return {
+    affiliateUrl,
+    sourceUrl: affiliateUrl,
+    canonicalUrl: "https://loja.com/produto?p=1",
+    finalUrl: "https://loja.com/produto?p=1",
+    sku: "SKU-1",
+    name: "Nome extraído",
+    imageUrl: "https://a/x.jpg",
+    price: "199.90",
+    color: "Verde",
+    category: "Jaquetas",
+    brand: "Mindset",
+    availableSizes: ["PP", "P", "M", "G"],
+    fieldsFound: [
+      "name",
+      "imageUrl",
+      "price",
+      "color",
+      "category",
+      "brand",
+      "sku",
+      "availableSizes",
+    ],
+    extractionSource: "mixed",
+    completeness: "complete",
+    fromCache: false,
+    ...overrides,
+  };
+}
+
+function mockExtraction(payload = extractionData()) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => ({
+      json: async () => ({ success: true, data: payload }),
+    })),
+  );
+}
+
+function revealManualForm() {
+  fireEvent.click(
+    screen.getByRole("button", { name: "Prefiro preencher manualmente" }),
+  );
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -38,18 +85,22 @@ afterEach(() => {
 });
 
 describe("ProductForm", () => {
-  it("renders the core fields in create mode", () => {
+  it("starts in link-first mode and reveals manual fields on request", () => {
     render(
       <ProductForm mode="create" liveId="live-1" categorySuggestions={[]} />,
     );
 
+    expect(
+      screen.getByLabelText("Cole seu link de afiliado"),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText("Nome do produto")).not.toBeInTheDocument();
+
+    revealManualForm();
     expect(screen.getByLabelText("Nome do produto")).toBeInTheDocument();
     expect(screen.getByLabelText("Categoria")).toBeInTheDocument();
-    expect(screen.getByLabelText("Link da imagem")).toBeInTheDocument();
-    expect(screen.getByLabelText("Link para comprar")).toBeInTheDocument();
   });
 
-  it("prefills the fields in edit mode", () => {
+  it("keeps edit fields visible and offers re-extraction", () => {
     render(
       <ProductForm
         mode="edit"
@@ -61,51 +112,114 @@ describe("ProductForm", () => {
     );
 
     expect(screen.getByLabelText("Nome do produto")).toHaveValue(
-      "Jaqueta jeans oversized",
+      validValues.name,
     );
-    expect(screen.getByLabelText("Link para comprar")).toHaveValue(
-      "https://loja.com/produto",
-    );
+    expect(
+      screen.getByRole("button", { name: "Buscar informações novamente" }),
+    ).toBeInTheDocument();
   });
 
-  it("shows a validation error for an unsafe image url", async () => {
+  it("opens and fills the form after extraction while preserving affiliate URL", async () => {
+    mockExtraction();
     render(
       <ProductForm mode="create" liveId="live-1" categorySuggestions={[]} />,
     );
 
-    fireEvent.change(screen.getByLabelText("Nome do produto"), {
-      target: { value: validValues.name },
+    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+      target: { value: affiliateUrl },
     });
-    fireEvent.change(screen.getByLabelText("Categoria"), {
-      target: { value: validValues.category },
-    });
-    fireEvent.change(screen.getByLabelText("Link da imagem"), {
-      target: { value: "javascript:alert(1)" },
-    });
-    fireEvent.change(screen.getByLabelText("Link para comprar"), {
-      target: { value: validValues.productUrl },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Salvar produto" }));
-
-    expect(
-      await screen.findByText(
-        "Cole o endereço de uma imagem pública (http/https).",
-      ),
-    ).toBeInTheDocument();
-    expect(createProductAction).not.toHaveBeenCalled();
+    expect(await screen.findByLabelText("Nome do produto")).toHaveValue(
+      "Nome extraído",
+    );
+    expect(screen.getByLabelText("Categoria")).toHaveValue("Jaquetas");
+    expect(screen.getByLabelText("Link para comprar")).toHaveValue(
+      affiliateUrl,
+    );
+    expect(screen.getByLabelText("Tamanho mostrado na live")).toHaveValue("");
+    expect(screen.getByText("Marca: Mindset")).toBeInTheDocument();
   });
 
-  it("submits valid values and redirects to the live", async () => {
+  it("shows sizes only as suggestions and applies one after an explicit click", async () => {
+    mockExtraction();
+    render(
+      <ProductForm mode="create" liveId="live-1" categorySuggestions={[]} />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+      target: { value: affiliateUrl },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));
+
+    const sizeInput = await screen.findByLabelText("Tamanho mostrado na live");
+    expect(sizeInput).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "M" }));
+    expect(sizeInput).toHaveValue("M");
+  });
+
+  it("preserves dirty fields during extraction", async () => {
+    mockExtraction();
+    render(
+      <ProductForm mode="create" liveId="live-1" categorySuggestions={[]} />,
+    );
+    revealManualForm();
+    fireEvent.change(screen.getByLabelText("Nome do produto"), {
+      target: { value: "Meu nome" },
+    });
+    fireEvent.change(screen.getByLabelText("Categoria"), {
+      target: { value: "Minha categoria" },
+    });
+    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+      target: { value: affiliateUrl },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));
+
+    await screen.findByText("Produto encontrado");
+    expect(screen.getByLabelText("Nome do produto")).toHaveValue("Meu nome");
+    expect(screen.getByLabelText("Categoria")).toHaveValue("Minha categoria");
+    expect(
+      screen.getByText("Mantivemos os campos que você já tinha preenchido."),
+    ).toBeInTheDocument();
+  });
+
+  it("opens the manual fallback and keeps the typed link after failure", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        json: async () => ({
+          success: false,
+          error: { code: "NO_PRODUCT_DATA", message: "Complete manualmente." },
+        }),
+      })),
+    );
+    render(
+      <ProductForm mode="create" liveId="live-1" categorySuggestions={[]} />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+      target: { value: affiliateUrl },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));
+
+    expect(await screen.findByLabelText("Nome do produto")).toBeInTheDocument();
+    expect(screen.getByLabelText("Link para comprar")).toHaveValue(
+      affiliateUrl,
+    );
+  });
+
+  it("submits the exact affiliate URL as productUrl and sourceUrl", async () => {
     vi.mocked(createProductAction).mockResolvedValue({
       success: true,
       data: { liveId: "live-1" },
     });
-
     render(
       <ProductForm mode="create" liveId="live-1" categorySuggestions={[]} />,
     );
-
+    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+      target: { value: affiliateUrl },
+    });
+    revealManualForm();
     fireEvent.change(screen.getByLabelText("Nome do produto"), {
       target: { value: validValues.name },
     });
@@ -115,66 +229,13 @@ describe("ProductForm", () => {
     fireEvent.change(screen.getByLabelText("Link da imagem"), {
       target: { value: validValues.imageUrl },
     });
-    fireEvent.change(screen.getByLabelText("Link para comprar"), {
-      target: { value: validValues.productUrl },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar à live" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Salvar produto" }));
-
-    await waitFor(() => {
-      expect(createProductAction).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(createProductAction).toHaveBeenCalledOnce());
+    expect(vi.mocked(createProductAction).mock.calls[0][1]).toMatchObject({
+      productUrl: affiliateUrl,
+      sourceUrl: affiliateUrl,
     });
     expect(push).toHaveBeenCalledWith("/admin/lives/live-1");
-  });
-
-  it("fills empty fields from extraction but preserves typed ones", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => ({
-        json: async () => ({
-          success: true,
-          data: {
-            sourceUrl: "https://loja.exemplo.com/p",
-            finalUrl: "https://loja.exemplo.com/p",
-            name: "Nome extraído",
-            imageUrl: "https://a/x.jpg",
-            price: "199.90",
-            color: "Verde",
-            fieldsFound: ["name", "imageUrl", "price", "color"],
-            extractionSource: "json-ld",
-            completeness: "complete",
-            fromCache: false,
-          },
-        }),
-      })),
-    );
-
-    render(
-      <ProductForm mode="create" liveId="live-1" categorySuggestions={[]} />,
-    );
-
-    // The creator types a name first (becomes a dirty field).
-    fireEvent.change(screen.getByLabelText("Nome do produto"), {
-      target: { value: "Meu nome" },
-    });
-
-    fireEvent.change(screen.getByLabelText("Link do produto"), {
-      target: { value: "https://loja.exemplo.com/p" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /Buscar informações/ }));
-
-    // Empty field gets filled...
-    await waitFor(() => {
-      expect(screen.getByLabelText("Link da imagem")).toHaveValue(
-        "https://a/x.jpg",
-      );
-    });
-    // ...the manually typed name is preserved.
-    expect(screen.getByLabelText("Nome do produto")).toHaveValue("Meu nome");
-    expect(
-      await screen.findByText(
-        "Alguns campos que você já havia preenchido foram mantidos.",
-      ),
-    ).toBeInTheDocument();
   });
 });

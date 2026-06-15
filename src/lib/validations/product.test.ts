@@ -45,6 +45,19 @@ describe("productInputSchema", () => {
     expect(bad.success).toBe(false);
   });
 
+  it("preserves affiliate query parameters exactly", () => {
+    const affiliateUrl =
+      "https://loja.com/p?utm_source=mais&utm_medium=minhacea&utm_campaign=pam&variant=preto";
+    const result = productInputSchema.parse({
+      ...validInput,
+      productUrl: affiliateUrl,
+      sourceUrl: affiliateUrl,
+    });
+
+    expect(result.productUrl).toBe(affiliateUrl);
+    expect(result.sourceUrl).toBe(affiliateUrl);
+  });
+
   it("turns empty optional fields into null", () => {
     const result = productInputSchema.parse({
       ...validInput,

@@ -31,6 +31,26 @@ vi.mock("@/server/lib/extract/parse", () => ({
 const authMock = auth as unknown as Mock;
 const USER_ID = "11111111-1111-4111-a111-111111111111";
 const URL_OK = "https://loja.exemplo.com/p/1";
+const AFFILIATE_URL =
+  "https://loja.exemplo.com/p/1?utm_campaign=criadora&utm_source=mais";
+
+function rawMetadata(
+  overrides: Partial<ReturnType<typeof extractProductMetadata>> = {},
+): ReturnType<typeof extractProductMetadata> {
+  return {
+    canonicalUrl: null,
+    sku: null,
+    name: null,
+    imageUrl: null,
+    price: null,
+    color: null,
+    category: null,
+    brand: null,
+    availableSizes: [],
+    sources: new Set(),
+    ...overrides,
+  };
+}
 
 function request(body: unknown): Request {
   return new Request("http://localhost/api/products/extract", {
@@ -95,6 +115,14 @@ describe("POST /api/products/extract", () => {
       imageUrl: "https://a/x.jpg",
       price: "199.90",
       color: "Azul",
+      metadata: {
+        canonicalUrl: "https://loja.exemplo.com/final",
+        sku: "SKU-1",
+        category: "Jaquetas",
+        brand: "Mindset",
+        availableSizes: ["P", "M"],
+        lookupHashes: ["alias"],
+      },
       extractionSource: "json-ld",
       status: "complete",
       errorCode: null,
@@ -109,6 +137,8 @@ describe("POST /api/products/extract", () => {
     expect(res.status).toBe(200);
     expect(json.data.fromCache).toBe(true);
     expect(json.data.name).toBe("Jaqueta");
+    expect(json.data.affiliateUrl).toBe(URL_OK);
+    expect(json.data.category).toBe("Jaquetas");
     expect(consumeExtractionAttempt).not.toHaveBeenCalled();
     expect(fetchHtmlWithSafeRedirects).not.toHaveBeenCalled();
   });
@@ -135,13 +165,20 @@ describe("POST /api/products/extract", () => {
       finalUrl: URL_OK,
       html: "<html></html>",
     });
-    vi.mocked(extractProductMetadata).mockReturnValue({
-      name: "Jaqueta",
-      imageUrl: "https://a/x.jpg",
-      price: "199.90",
-      color: "Azul",
-      sources: new Set(["json-ld"]),
-    });
+    vi.mocked(extractProductMetadata).mockReturnValue(
+      rawMetadata({
+        canonicalUrl: "https://loja.exemplo.com/p/1",
+        sku: "SKU-1",
+        name: "Jaqueta",
+        imageUrl: "https://a/x.jpg",
+        price: "199.90",
+        color: "Azul",
+        category: "Jaquetas",
+        brand: "Mindset",
+        availableSizes: ["P", "M"],
+        sources: new Set(["json-ld"]),
+      }),
+    );
 
     const res = await POST(request({ url: URL_OK }));
     const json = await res.json();
@@ -150,7 +187,36 @@ describe("POST /api/products/extract", () => {
     expect(json.data.completeness).toBe("complete");
     expect(json.data.fromCache).toBe(false);
     expect(json.data.fieldsFound).toContain("name");
+    expect(json.data.fieldsFound).toContain("availableSizes");
+    expect(json.data.canonicalUrl).toBe("https://loja.exemplo.com/p/1");
     expect(upsertExtractionCache).toHaveBeenCalledTimes(1);
+  });
+
+  it("preserves the affiliate URL exactly and keeps final URL separate", async () => {
+    signedIn();
+    vi.mocked(fetchHtmlWithSafeRedirects).mockResolvedValue({
+      ok: true,
+      sourceUrl: AFFILIATE_URL,
+      finalUrl: "https://loja.exemplo.com/produto/final",
+      html: "<html></html>",
+    });
+    vi.mocked(extractProductMetadata).mockReturnValue(
+      rawMetadata({
+        canonicalUrl: "https://loja.exemplo.com/produto/canonical",
+        name: "Produto",
+        imageUrl: "https://a/x.jpg",
+      }),
+    );
+
+    const res = await POST(request({ url: AFFILIATE_URL }));
+    const json = await res.json();
+
+    expect(json.data.affiliateUrl).toBe(AFFILIATE_URL);
+    expect(json.data.sourceUrl).toBe(AFFILIATE_URL);
+    expect(json.data.finalUrl).toBe("https://loja.exemplo.com/produto/final");
+    expect(json.data.canonicalUrl).toBe(
+      "https://loja.exemplo.com/produto/canonical",
+    );
   });
 
   it("returns 422 when there is no name or image", async () => {
@@ -161,13 +227,14 @@ describe("POST /api/products/extract", () => {
       finalUrl: URL_OK,
       html: "<html></html>",
     });
-    vi.mocked(extractProductMetadata).mockReturnValue({
-      name: null,
-      imageUrl: null,
-      price: "10.00",
-      color: null,
-      sources: new Set(),
-    });
+    vi.mocked(extractProductMetadata).mockReturnValue(
+      rawMetadata({
+        name: null,
+        imageUrl: null,
+        price: "10.00",
+        color: null,
+      }),
+    );
 
     const res = await POST(request({ url: URL_OK }));
     const json = await res.json();
@@ -180,7 +247,10 @@ describe("POST /api/products/extract", () => {
     ["UPSTREAM_BLOCKED", 502],
   ] as const)("maps fetch error %s to %s", async (code, status) => {
     signedIn();
-    vi.mocked(fetchHtmlWithSafeRedirects).mockResolvedValue({ ok: false, code });
+    vi.mocked(fetchHtmlWithSafeRedirects).mockResolvedValue({
+      ok: false,
+      code,
+    });
 
     const res = await POST(request({ url: URL_OK }));
     const json = await res.json();

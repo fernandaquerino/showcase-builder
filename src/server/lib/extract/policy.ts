@@ -11,9 +11,7 @@ const TEMPORARY_ERROR_TTL_MS = 10 * 60 * 1000;
 export type CacheKind = "success" | "no-data" | "temporary-error";
 
 /** Errors worth caching, and for how long. Pre-network errors are not cached. */
-export function cacheKindForError(
-  code: ExtractionErrorCode,
-): CacheKind | null {
+export function cacheKindForError(code: ExtractionErrorCode): CacheKind | null {
   switch (code) {
     case "NO_PRODUCT_DATA":
       return "no-data";

@@ -28,7 +28,7 @@ const serverEnvSchema = z
     PRODUCT_EXTRACTION_ALLOWED_HOSTS: z.string().default(""),
     PRODUCT_EXTRACTION_TIMEOUT_MS: numericEnv(8000),
     PRODUCT_EXTRACTION_MAX_REDIRECTS: numericEnv(5),
-    PRODUCT_EXTRACTION_MAX_BYTES: numericEnv(1_048_576),
+    PRODUCT_EXTRACTION_MAX_BYTES: numericEnv(8_388_608),
   })
   .superRefine((env, context) => {
     const hasGoogleId = Boolean(env.AUTH_GOOGLE_ID);

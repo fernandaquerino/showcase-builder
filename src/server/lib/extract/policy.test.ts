@@ -15,12 +15,14 @@ describe("cacheKindForError", () => {
     expect(cacheKindForError("NO_PRODUCT_DATA")).toBe("no-data");
   });
 
-  it.each(["TIMEOUT", "UPSTREAM_BLOCKED", "NOT_FOUND", "EXTRACTION_FAILED"] as const)(
-    "caches %s as a temporary error",
-    (code) => {
-      expect(cacheKindForError(code)).toBe("temporary-error");
-    },
-  );
+  it.each([
+    "TIMEOUT",
+    "UPSTREAM_BLOCKED",
+    "NOT_FOUND",
+    "EXTRACTION_FAILED",
+  ] as const)("caches %s as a temporary error", (code) => {
+    expect(cacheKindForError(code)).toBe("temporary-error");
+  });
 
   it.each(["INVALID_URL", "HOST_NOT_ALLOWED", "RATE_LIMITED"] as const)(
     "does not cache %s",

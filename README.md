@@ -99,11 +99,11 @@ nunca do cliente.
 
 ### Rotas administrativas
 
-| Rota                     | Descrição                                             |
-| ------------------------ | ----------------------------------------------------- |
-| `/admin`                 | Lista as lives da pessoa autenticada (publicada primeiro, depois por atualização mais recente). |
-| `/admin/lives/new`       | Cria uma nova live como rascunho.                     |
-| `/admin/lives/[liveId]`  | Edita, publica, despublica ou exclui uma live.        |
+| Rota                    | Descrição                                                                                       |
+| ----------------------- | ----------------------------------------------------------------------------------------------- |
+| `/admin`                | Lista as lives da pessoa autenticada (publicada primeiro, depois por atualização mais recente). |
+| `/admin/lives/new`      | Cria uma nova live como rascunho.                                                               |
+| `/admin/lives/[liveId]` | Edita, publica, despublica ou exclui uma live.                                                  |
 
 ### Criar uma live
 
@@ -161,10 +161,10 @@ confiamos em `liveId`, `productId`, `position` ou `userId` vindos do cliente.
 
 ### Rotas administrativas
 
-| Rota                                          | Descrição                          |
-| --------------------------------------------- | ---------------------------------- |
-| `/admin/lives/[liveId]/products/new`          | Adiciona um produto à live.        |
-| `/admin/lives/[liveId]/products/[productId]`  | Edita um produto existente.        |
+| Rota                                         | Descrição                   |
+| -------------------------------------------- | --------------------------- |
+| `/admin/lives/[liveId]/products/new`         | Adiciona um produto à live. |
+| `/admin/lives/[liveId]/products/[productId]` | Edita um produto existente. |
 
 ### Adicionar, editar e excluir
 
@@ -221,37 +221,46 @@ Não há **nova migration** nesta fase: a tabela `products` já foi criada na Fa
 
 ## Fase 3 — Extração automática por link
 
-A criadora cola o link do produto, o servidor busca **nome, imagem, preço e cor**
-no HTML público da página e **preenche apenas os campos vazios** do formulário. A
-criadora confere, edita e salva. **O cadastro manual continua funcionando** mesmo
-quando a extração falha — a extração nunca bloqueia nem salva o produto.
+A criadora cola primeiro o link de afiliado. O servidor busca **nome, imagem,
+preço, cor, categoria, marca, SKU e tamanhos disponíveis** no HTML público da
+página e preenche apenas os campos vazios do formulário. A criadora confere,
+edita e salva. **O cadastro manual continua funcionando** mesmo quando a
+extração falha — a extração nunca bloqueia nem salva o produto.
 
 ### Fluxo
 
-1. Cole o link → 2. **Buscar informações** → 3. confira a prévia → 4. complete
-categoria/tamanho/cor → 5. salve. Categoria, tamanho e estoque **não** são
-preenchidos automaticamente. Campos já digitados são preservados (via
-`dirtyFields` do React Hook Form); ao buscar de novo, o mesmo critério se aplica.
+1. A tela de criação começa mostrando apenas o link, **Buscar produto** e
+   **Prefiro preencher manualmente**.
+2. Sucesso, resultado parcial ou falha revelam o formulário completo sem apagar
+   o link. A falha sempre abre o fallback manual.
+3. Nome, imagem, preço, cor e categoria encontrados preenchem somente campos
+   vazios e não modificados (`dirtyFields`).
+4. Tamanhos disponíveis aparecem como sugestões; o **tamanho mostrado na live**
+   só muda quando a criadora escolhe ou digita.
+5. Na edição, **Buscar informações novamente** reaplica as mesmas regras e nunca
+   salva automaticamente nem altera a posição.
 
 ### Semântica de URLs
 
-- **`sourceUrl`** — o link que a criadora colou para extração (guardado no
-  produto como proveniência).
-- **`productUrl`** — o link de compra mostrado às seguidoras; **preserva o link
-  de afiliado** colado (a extração nunca o troca pela URL final pós-redirect).
-- **URL final pós-redirects** — guardada **apenas** no cache de extração
-  (`final_url`), nunca no produto.
+- **`affiliateUrl`** — valor exato colado pela criadora, incluindo UTMs e
+  parâmetros de campanha.
+- **`productUrl`** — recebe a `affiliateUrl`, é persistida em `product_url` e
+  será o link público de compra.
+- **`sourceUrl`** — também recebe a `affiliateUrl` e é persistida em
+  `source_url` como proveniência da extração.
+- **`canonicalUrl`** — URL limpa sugerida pelo HTML (`rel=canonical`, JSON-LD ou
+  `og:url`); fica apenas no cache e nunca substitui o link afiliado.
+- **`finalUrl`** — último hop da cadeia segura de redirects; fica em
+  `final_url` no cache e nunca substitui o link afiliado.
 
 ### Endpoint
 
-`POST /api/products/extract` (runtime **Node.js**, exige autenticação). Resposta
-de sucesso traz `name/imageUrl/price/color`, `fieldsFound`, `extractionSource`
-(`json-ld` | `open-graph` | `meta` | `mixed`), `completeness` (`complete` |
-`partial`) e `fromCache`. Erros usam um `code` tipado + mensagem amigável (nunca
-HTML, SQL, stack trace, IP ou variáveis de ambiente). Status: `200` sucesso/
-parcial, `400` URL inválida, `401` sem sessão, `403` host não permitido, `404`,
-`408` timeout, `415` conteúdo não suportado, `422` sem dados, `429` rate limit,
-`502` erro/bloqueio externo.
+`POST /api/products/extract` (runtime **Node.js**, exige autenticação). A resposta
+separa `affiliateUrl`, `canonicalUrl` e `finalUrl`, além de retornar
+`name/imageUrl/price/color/category/brand/sku/availableSizes`, `fieldsFound`,
+`extractionSource`, `completeness` e `fromCache`. Nunca retorna HTML bruto.
+Erros usam um `code` tipado + mensagem amigável (nunca HTML, SQL, stack trace,
+IP ou variáveis de ambiente).
 
 ### Allowlist e variáveis de ambiente
 
@@ -262,15 +271,14 @@ inclua **todos os hosts da cadeia de redirect** (o link de afiliado e o destino
 final). Nenhuma variável é `NEXT_PUBLIC`.
 
 ```env
-PRODUCT_EXTRACTION_ALLOWED_HOSTS=""   # ex.: "minhacea.cea.com.br,www.cea.com.br"
+PRODUCT_EXTRACTION_ALLOWED_HOSTS="minhacea.cea.com.br,www.cea.com.br"
 PRODUCT_EXTRACTION_TIMEOUT_MS="8000"
 PRODUCT_EXTRACTION_MAX_REDIRECTS="5"
-PRODUCT_EXTRACTION_MAX_BYTES="1048576"
+PRODUCT_EXTRACTION_MAX_BYTES="8388608"
 ```
 
-> ⚠️ Os hosts da C&A **não** vêm preenchidos: precisam ser confirmados a partir
-> de um link de afiliado real (resolvendo `minhacea.cea.com.br/?lcea=CODE`). Sem
-> isso, a extração responde com erro seguro e o cadastro manual continua.
+Os hosts acima foram confirmados com links diretos e de afiliado da C&A. O
+limite considera o HTML descompactado da loja, que pode ultrapassar 5 MB.
 
 ### Proteções SSRF e limites de rede
 
@@ -289,22 +297,28 @@ PRODUCT_EXTRACTION_MAX_BYTES="1048576"
 
 ### Cache e rate limit (Postgres/Neon)
 
-- Cache em `product_extraction_cache`, chave = **SHA-256 da URL** (`url_hash`).
-  **Nunca** guarda HTML, cookies ou headers. TTL: **24h** para sucesso/parcial e
-  para "sem dados"; **10min** para erros temporários (timeout/bloqueio).
+- Cache em `product_extraction_cache`. A identidade usa SHA-256, nesta ordem:
+  **SKU → canonical normalizada → final normalizada → original normalizada**.
+  `metadata.lookupHashes` mantém as chaves alternativas. A normalização remove
+  fragmento e apenas parâmetros conhecidos de tracking (`utm_*`, `gclid`,
+  `fbclid`), preservando parâmetros funcionais e sem modificar a afiliada.
+- Registros antigos continuam localizáveis pelo hash legado da URL completa.
+  O cache nunca guarda HTML, cookies ou headers. TTL: **24h** para sucesso/
+  parcial e "sem dados"; **10min** para erros temporários.
 - Rate limit em `extraction_rate_limits`: **10 tentativas/min por usuário**,
   janela fixa, contador incrementado por upsert atômico (seguro em serverless).
   Retorna `429` + `Retry-After`. **Cache hit válido não consome tentativa.**
 
 ### Estratégias de extração (Cheerio)
 
-1. **JSON-LD** (`@type: Product`, incl. arrays, `@graph`, `@type` array, imagem
-   string/array/`{url}`, offers objeto/array/`lowPrice`) — blocos inválidos são
-   ignorados sem derrubar a extração.
-2. **Open Graph / Twitter** (`og:title`, `og:image`, `product:price:amount`,
-   `twitter:*`) como fallback — sem rebaixar um dado válido do JSON-LD.
-3. **Meta básica** (`<title>`) como último recurso; imagem só com candidato
-   confiável (melhor `null` do que errado). Fontes combinadas viram `mixed`.
+1. **JSON-LD Product**: nome, imagem, preço, cor, SKU/`productID`/`mpn`, marca,
+   categoria, tamanho e URL; suporta objeto, array, `@graph`, tipos em array,
+   offers em objeto/array e formas variadas de imagem/marca.
+2. **JSON-LD BreadcrumbList** e breadcrumb HTML semântico: sugerem a categoria
+   mais específica, ignorando níveis genéricos como Home/Feminino/Produtos.
+3. **Open Graph / Twitter**: título, imagem, preço e `og:url` como fallback.
+4. **Meta básica** (`<title>`) como último recurso. Fontes combinadas viram
+   `mixed`. Scripts nunca são executados e não há browser headless.
 
 ### Imagens
 
@@ -322,9 +336,10 @@ rate-limit (lógica pura), endpoint e UI.
 
 ### Migration
 
-Migration incremental (não destrutiva) cria `product_extraction_cache` e
-`extraction_rate_limits`. Gere com `npm run db:generate` e aplique com
-`npm run db:migrate`.
+`drizzle/0001_flat_wolverine.sql` é não destrutiva e cria as tabelas de cache/
+rate limit da Fase 3 já com o JSONB `metadata`. Nenhuma coluna foi adicionada a
+`products`; SKU, canonical, marca e tamanhos ficam somente no cache. Aplique com
+`npm run db:migrate` após revisar o SQL.
 
 ### Comandos
 

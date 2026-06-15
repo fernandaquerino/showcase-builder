@@ -23,13 +23,12 @@ const optionalText = (max: number, message: string) =>
     .transform((value) => (value === "" ? null : value));
 
 const httpUrlSchema = (message: string) =>
-  z.string().trim().min(1, message).refine(isSafeHttpUrl, message);
+  z.string().min(1, message).refine(isSafeHttpUrl, message);
 
 /** Optional URL that becomes `null` when empty (used for the extraction origin). */
 const optionalUrlSchema = (message: string) =>
   z
     .string()
-    .trim()
     .optional()
     .transform((value) => (value && value !== "" ? value : null))
     .refine((value) => value === null || isSafeHttpUrl(value), message);

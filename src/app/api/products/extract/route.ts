@@ -15,10 +15,14 @@ import {
 import {
   getValidCachedExtraction,
   upsertExtractionCache,
+  type ExtractionCacheMetadata,
   type ExtractionCacheRow,
 } from "@/server/db/queries/extraction-cache";
 import { consumeExtractionAttempt } from "@/server/db/queries/rate-limit";
-import { hashUrl } from "@/server/lib/extract/hash";
+import {
+  buildProductCacheKeys,
+  initialCacheLookupHashes,
+} from "@/server/lib/extract/cache-key";
 import { httpStatusForError } from "@/server/lib/extract/http";
 import { logExtractionEvent } from "@/server/lib/extract/log";
 import { normalizeExtractedProduct } from "@/server/lib/extract/normalize";
@@ -50,8 +54,22 @@ function fieldsFoundFrom(values: {
   imageUrl: string | null;
   price: string | null;
   color: string | null;
+  metadata: ExtractionCacheMetadata | null;
 }): ExtractableField[] {
-  return EXTRACTABLE_FIELDS.filter((field) => values[field] !== null);
+  const metadata = values.metadata;
+  const found = {
+    name: values.name,
+    imageUrl: values.imageUrl,
+    price: values.price,
+    color: values.color,
+    category: metadata?.category ?? null,
+    brand: metadata?.brand ?? null,
+    sku: metadata?.sku ?? null,
+    availableSizes: metadata?.availableSizes.length
+      ? metadata.availableSizes
+      : null,
+  };
+  return EXTRACTABLE_FIELDS.filter((field) => found[field] !== null);
 }
 
 function successResponse(
@@ -60,22 +78,63 @@ function successResponse(
   return NextResponse.json({ success: true, data }, { status: 200 });
 }
 
+function cacheMetadata(value: unknown): ExtractionCacheMetadata {
+  if (!value || typeof value !== "object") {
+    return {
+      canonicalUrl: null,
+      sku: null,
+      category: null,
+      brand: null,
+      availableSizes: [],
+      lookupHashes: [],
+    };
+  }
+
+  const metadata = value as Partial<ExtractionCacheMetadata>;
+  return {
+    canonicalUrl:
+      typeof metadata.canonicalUrl === "string" ? metadata.canonicalUrl : null,
+    sku: typeof metadata.sku === "string" ? metadata.sku : null,
+    category: typeof metadata.category === "string" ? metadata.category : null,
+    brand: typeof metadata.brand === "string" ? metadata.brand : null,
+    availableSizes: Array.isArray(metadata.availableSizes)
+      ? metadata.availableSizes.filter(
+          (size): size is string => typeof size === "string",
+        )
+      : [],
+    lookupHashes: Array.isArray(metadata.lookupHashes)
+      ? metadata.lookupHashes.filter(
+          (hash): hash is string => typeof hash === "string",
+        )
+      : [],
+  };
+}
+
 function cacheToResponse(
   cached: ExtractionCacheRow,
+  affiliateUrl: string,
 ): NextResponse<ExtractionResponse> {
   if (cached.status === "error") {
-    const code = (cached.errorCode ?? "EXTRACTION_FAILED") as ExtractionErrorCode;
+    const code = (cached.errorCode ??
+      "EXTRACTION_FAILED") as ExtractionErrorCode;
     return jsonError(code);
   }
 
+  const metadata = cacheMetadata(cached.metadata);
   return successResponse({
-    sourceUrl: cached.sourceUrl,
+    affiliateUrl,
+    sourceUrl: affiliateUrl,
+    canonicalUrl: metadata.canonicalUrl,
     finalUrl: cached.finalUrl ?? cached.sourceUrl,
+    sku: metadata.sku,
     name: cached.name,
     imageUrl: cached.imageUrl,
     price: cached.price,
     color: cached.color,
-    fieldsFound: fieldsFoundFrom(cached),
+    category: metadata.category,
+    brand: metadata.brand,
+    availableSizes: metadata.availableSizes,
+    fieldsFound: fieldsFoundFrom({ ...cached, metadata }),
     extractionSource: (cached.extractionSource ?? "meta") as ExtractionSource,
     completeness: cached.status === "partial" ? "partial" : "complete",
     fromCache: true,
@@ -100,6 +159,7 @@ async function cacheNetworkError(
     imageUrl: null,
     price: null,
     color: null,
+    metadata: null,
     extractionSource: null,
     status: "error",
     errorCode: code,
@@ -140,17 +200,18 @@ export async function POST(
     return jsonError(validation.code);
   }
 
-  const canonicalUrl = validation.url.href;
+  const affiliateUrl = parsed.data.url;
+  const requestUrl = validation.url.href;
   const host = validation.url.hostname;
-  const urlHash = hashUrl(canonicalUrl);
+  const initialHashes = initialCacheLookupHashes(affiliateUrl);
 
   logExtractionEvent("extraction_started", { host });
 
   // A valid cache hit never consumes a network rate-limit attempt.
-  const cached = await getValidCachedExtraction(urlHash);
+  const cached = await getValidCachedExtraction(initialHashes);
   if (cached) {
     logExtractionEvent("cache_hit", { host });
-    return cacheToResponse(cached);
+    return cacheToResponse(cached, affiliateUrl);
   }
 
   const rate = await consumeExtractionAttempt(
@@ -165,12 +226,19 @@ export async function POST(
     });
   }
 
-  const fetched = await fetchHtmlWithSafeRedirects(canonicalUrl, config);
+  const fetched = await fetchHtmlWithSafeRedirects(requestUrl, config);
   if (!fetched.ok) {
-    await cacheNetworkError(fetched.code, canonicalUrl, urlHash);
-    logExtractionEvent(fetched.code === "TIMEOUT" ? "timeout" : "upstream_error", {
-      host,
-    });
+    await cacheNetworkError(
+      fetched.code,
+      affiliateUrl,
+      initialHashes[0] ?? initialHashes[1],
+    );
+    logExtractionEvent(
+      fetched.code === "TIMEOUT" ? "timeout" : "upstream_error",
+      {
+        host,
+      },
+    );
     return jsonError(fetched.code);
   }
 
@@ -180,13 +248,14 @@ export async function POST(
 
   if (normalized.completeness === null) {
     await upsertExtractionCache({
-      urlHash,
-      sourceUrl: canonicalUrl,
+      urlHash: initialHashes[0] ?? initialHashes[1],
+      sourceUrl: affiliateUrl,
       finalUrl: fetched.finalUrl,
       name: null,
       imageUrl: null,
       price: null,
       color: null,
+      metadata: null,
       extractionSource: null,
       status: "error",
       errorCode: "NO_PRODUCT_DATA",
@@ -196,14 +265,30 @@ export async function POST(
     return jsonError("NO_PRODUCT_DATA");
   }
 
+  const cacheKeys = buildProductCacheKeys({
+    sku: normalized.sku,
+    canonicalUrl: normalized.canonicalUrl,
+    finalUrl: fetched.finalUrl,
+    affiliateUrl,
+  });
+  const metadata: ExtractionCacheMetadata = {
+    canonicalUrl: normalized.canonicalUrl,
+    sku: normalized.sku,
+    category: normalized.category,
+    brand: normalized.brand,
+    availableSizes: normalized.availableSizes,
+    lookupHashes: cacheKeys.lookupHashes,
+  };
+
   await upsertExtractionCache({
-    urlHash,
-    sourceUrl: canonicalUrl,
+    urlHash: cacheKeys.primaryHash,
+    sourceUrl: affiliateUrl,
     finalUrl: fetched.finalUrl,
     name: normalized.name,
     imageUrl: normalized.imageUrl,
     price: normalized.price,
     color: normalized.color,
+    metadata,
     extractionSource: normalized.extractionSource,
     status: normalized.completeness,
     errorCode: null,
@@ -218,12 +303,18 @@ export async function POST(
   );
 
   return successResponse({
-    sourceUrl: canonicalUrl,
+    affiliateUrl,
+    sourceUrl: affiliateUrl,
+    canonicalUrl: normalized.canonicalUrl,
     finalUrl: fetched.finalUrl,
+    sku: normalized.sku,
     name: normalized.name,
     imageUrl: normalized.imageUrl,
     price: normalized.price,
     color: normalized.color,
+    category: normalized.category,
+    brand: normalized.brand,
+    availableSizes: normalized.availableSizes,
     fieldsFound: normalized.fieldsFound,
     extractionSource: normalized.extractionSource,
     completeness: normalized.completeness,

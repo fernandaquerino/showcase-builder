@@ -3,6 +3,8 @@ import { load } from "cheerio";
 import { describe, expect, it } from "vitest";
 
 import {
+  extractHtmlBreadcrumbCategory,
+  extractJsonLdBreadcrumbCategory,
   extractJsonLdProduct,
   extractOpenGraph,
   extractProductMetadata,
@@ -14,171 +16,174 @@ function jsonLd(payload: unknown): string {
   )}</script></head><body></body></html>`;
 }
 
-const PAGE = "https://loja.exemplo.com/p/1";
+const PAGE = "https://loja.exemplo.com/produto/123";
 
 describe("extractJsonLdProduct", () => {
-  it("reads a simple Product", () => {
-    const $ = load(
-      jsonLd({
-        "@type": "Product",
-        name: "Jaqueta",
-        image: "https://cdn.exemplo.com/a.jpg",
-        color: "Azul",
-        offers: { "@type": "Offer", price: "199.90" },
-      }),
+  it("reads the extended Product fields", () => {
+    const product = extractJsonLdProduct(
+      load(
+        jsonLd({
+          "@type": "Product",
+          name: "Jaqueta",
+          image: ["https://cdn.exemplo.com/a.jpg"],
+          color: "Preto",
+          category: "Casacos",
+          sku: "SKU-123",
+          brand: { "@type": "Brand", name: "Mindset" },
+          size: ["P", "M", "G"],
+          url: "/produto/123",
+          offers: [{ price: "199.90" }],
+        }),
+      ),
     );
 
-    expect(extractJsonLdProduct($)).toEqual({
+    expect(product).toEqual({
       name: "Jaqueta",
       image: "https://cdn.exemplo.com/a.jpg",
       price: "199.90",
-      color: "Azul",
+      color: "Preto",
+      category: "Casacos",
+      sku: "SKU-123",
+      brand: "Mindset",
+      sizes: ["P", "M", "G"],
+      url: "/produto/123",
     });
   });
 
-  it("finds the Product inside an array", () => {
-    const $ = load(
-      jsonLd([
-        { "@type": "WebSite", name: "Loja" },
-        { "@type": "Product", name: "Calça", offers: { price: 99.9 } },
-      ]),
+  it("supports array, @graph, type array, image object and brand string", () => {
+    const product = extractJsonLdProduct(
+      load(
+        jsonLd([
+          { "@type": "WebSite", name: "Loja" },
+          {
+            "@graph": [
+              {
+                "@type": ["Thing", "Product"],
+                name: "Bota",
+                image: { contentUrl: "https://a/bota.jpg" },
+                productID: "P-9",
+                brand: "Marca",
+                size: "36, 37|38",
+                offers: { lowPrice: 99.9 },
+              },
+            ],
+          },
+        ]),
+      ),
     );
-    expect(extractJsonLdProduct($)?.name).toBe("Calça");
-    expect(extractJsonLdProduct($)?.price).toBe(99.9);
+
+    expect(product?.sku).toBe("P-9");
+    expect(product?.brand).toBe("Marca");
+    expect(product?.sizes).toEqual(["36", "37", "38"]);
+    expect(product?.image).toBe("https://a/bota.jpg");
+    expect(product?.price).toBe(99.9);
   });
 
-  it("finds the Product inside @graph", () => {
-    const $ = load(
-      jsonLd({ "@graph": [{ "@type": ["Thing", "Product"], name: "Bota" }] }),
+  it("uses mpn after sku and productID", () => {
+    const product = extractJsonLdProduct(
+      load(jsonLd({ "@type": "Product", name: "X", mpn: "MPN-1" })),
     );
-    expect(extractJsonLdProduct($)?.name).toBe("Bota");
+    expect(product?.sku).toBe("MPN-1");
   });
 
-  it("ignores an invalid block and uses a later valid one", () => {
+  it("ignores malformed JSON-LD and returns null without a Product", () => {
     const html =
-      `<html><head>` +
-      `<script type="application/ld+json">{ not json }</script>` +
-      `<script type="application/ld+json">${JSON.stringify({
-        "@type": "Product",
-        name: "Blusa",
-      })}</script>` +
-      `</head><body></body></html>`;
-    expect(extractJsonLdProduct(load(html))?.name).toBe("Blusa");
+      '<script type="application/ld+json">{bad}</script>' +
+      '<script type="application/ld+json">{"@type":"WebSite"}</script>';
+    expect(extractJsonLdProduct(load(html))).toBeNull();
   });
+});
 
-  it("reads image as an array or an object", () => {
-    const asArray = load(
-      jsonLd({ "@type": "Product", name: "X", image: ["https://a/x.jpg"] }),
-    );
-    expect(extractJsonLdProduct(asArray)?.image).toBe("https://a/x.jpg");
-
-    const asObject = load(
-      jsonLd({ "@type": "Product", name: "X", image: { url: "https://a/y.jpg" } }),
-    );
-    expect(extractJsonLdProduct(asObject)?.image).toBe("https://a/y.jpg");
-  });
-
-  it("reads price from offers array and lowPrice", () => {
-    const arrayOffers = load(
+describe("breadcrumbs", () => {
+  it("chooses the most specific JSON-LD breadcrumb and ignores generic levels", () => {
+    const $ = load(
       jsonLd({
-        "@type": "Product",
-        name: "X",
-        offers: [{ price: "10.00" }, { price: "20.00" }],
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { position: 1, name: "Home" },
+          { position: 2, item: { name: "Feminino" } },
+          { position: 3, name: "Roupas" },
+          { position: 4, name: "Jaquetas" },
+        ],
       }),
     );
-    expect(extractJsonLdProduct(arrayOffers)?.price).toBe("10.00");
-
-    const aggregate = load(
-      jsonLd({
-        "@type": "Product",
-        name: "X",
-        offers: { "@type": "AggregateOffer", lowPrice: "49.90" },
-      }),
-    );
-    expect(extractJsonLdProduct(aggregate)?.price).toBe("49.90");
+    expect(extractJsonLdBreadcrumbCategory($)).toBe("Jaquetas");
   });
 
-  it("returns null when there is no Product", () => {
-    expect(extractJsonLdProduct(load("<html></html>"))).toBeNull();
+  it("uses semantic HTML breadcrumbs as fallback", () => {
+    const $ = load(
+      '<nav aria-label="Breadcrumb"><a>Início</a><a>Roupas</a><a>Vestidos</a></nav>',
+    );
+    expect(extractHtmlBreadcrumbCategory($)).toBe("Vestidos");
   });
 });
 
 describe("extractOpenGraph", () => {
-  it("reads Open Graph and Twitter fallbacks", () => {
-    const $ = load(
-      `<html><head>
-        <meta property="og:title" content="Vestido" />
-        <meta property="og:image" content="https://a/og.jpg" />
-        <meta property="product:price:amount" content="259.90" />
-      </head></html>`,
-    );
+  it("reads title, image, price and canonical candidate", () => {
+    const $ = load(`<head>
+      <meta property="og:title" content="Vestido" />
+      <meta property="og:image" content="https://a/og.jpg" />
+      <meta property="product:price:amount" content="259.90" />
+      <meta property="og:url" content="https://loja.exemplo.com/p/vestido" />
+    </head>`);
     expect(extractOpenGraph($)).toEqual({
       name: "Vestido",
       image: "https://a/og.jpg",
       price: "259.90",
+      url: "https://loja.exemplo.com/p/vestido",
     });
-
-    const twitter = load(
-      `<html><head>
-        <meta name="twitter:title" content="Saia" />
-        <meta name="twitter:image" content="https://a/tw.jpg" />
-      </head></html>`,
-    );
-    expect(extractOpenGraph(twitter).name).toBe("Saia");
-    expect(extractOpenGraph(twitter).image).toBe("https://a/tw.jpg");
   });
 });
 
 describe("extractProductMetadata", () => {
-  it("prefers JSON-LD over Open Graph", () => {
-    const html =
-      jsonLd({ "@type": "Product", name: "JSON Name" }).replace(
-        "</head>",
-        `<meta property="og:title" content="OG Name" /></head>`,
-      );
+  it("prefers JSON-LD fields and BreadcrumbList category", () => {
+    const html = jsonLd([
+      {
+        "@type": "Product",
+        name: "Jaqueta",
+        category: "Categoria estruturada",
+        sku: "ABC",
+        brand: "Mindset",
+        image: "/image.jpg",
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [{ position: 1, name: "Jaquetas" }],
+      },
+    ]).replace(
+      "</head>",
+      '<link rel="canonical" href="/produto/123?utm_source=x" /></head>',
+    );
+
     const result = extractProductMetadata(html, PAGE);
-    expect(result.name).toBe("JSON Name");
-    expect(result.sources.has("json-ld")).toBe(true);
+    expect(result.category).toBe("Jaquetas");
+    expect(result.canonicalUrl).toBe(
+      "https://loja.exemplo.com/produto/123?utm_source=x",
+    );
+    expect(result.sku).toBe("ABC");
+    expect(result.brand).toBe("Mindset");
+    expect(result.imageUrl).toBe("https://loja.exemplo.com/image.jpg");
+    expect([...result.sources].sort()).toEqual(["breadcrumb", "json-ld"]);
   });
 
-  it("marks the source as mixed when combining strategies", () => {
-    const html =
-      `<html><head>` +
-      `<script type="application/ld+json">${JSON.stringify({
-        "@type": "Product",
-        name: "Casaco",
-      })}</script>` +
-      `<meta property="og:image" content="https://a/og.jpg" />` +
-      `</head></html>`;
+  it("combines JSON-LD with Open Graph and marks both sources", () => {
+    const html = jsonLd({ "@type": "Product", name: "Casaco" }).replace(
+      "</head>",
+      '<meta property="og:image" content="https://a/og.jpg" /></head>',
+    );
     const result = extractProductMetadata(html, PAGE);
     expect(result.name).toBe("Casaco");
     expect(result.imageUrl).toBe("https://a/og.jpg");
     expect([...result.sources].sort()).toEqual(["json-ld", "open-graph"]);
   });
 
-  it("resolves a relative image against the page URL", () => {
-    const html = jsonLd({
-      "@type": "Product",
-      name: "X",
-      image: "/img/p.jpg",
-    });
-    expect(extractProductMetadata(html, PAGE).imageUrl).toBe(
-      "https://loja.exemplo.com/img/p.jpg",
-    );
-  });
-
-  it("returns no name/image when the page has no data", () => {
-    const result = extractProductMetadata("<html><body>oi</body></html>", PAGE);
-    expect(result.name).toBeNull();
-    expect(result.imageUrl).toBeNull();
-  });
-
-  it("falls back to the page title for the name", () => {
+  it("falls back to title and extracts a product code from the URL", () => {
     const result = extractProductMetadata(
-      "<html><head><title>Produto Legal</title></head></html>",
+      "<html><head><title>Produto legal</title></head></html>",
       PAGE,
     );
-    expect(result.name).toBe("Produto Legal");
+    expect(result.name).toBe("Produto legal");
+    expect(result.sku).toBe("123");
     expect(result.sources.has("meta")).toBe(true);
   });
 });

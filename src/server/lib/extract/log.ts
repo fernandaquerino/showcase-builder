@@ -29,5 +29,9 @@ export function logExtractionEvent(
   event: ExtractionLogEvent,
   context: { host?: string } = {},
 ): void {
-  console.info("[extraction]", event, context.host ? { host: context.host } : {});
+  console.info(
+    "[extraction]",
+    event,
+    context.host ? { host: context.host } : {},
+  );
 }

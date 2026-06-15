@@ -1,7 +1,12 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 
-import { isBlockedIp, isHostAllowed, parseHttpUrl, validateUrl } from "./url-guard";
+import {
+  isBlockedIp,
+  isHostAllowed,
+  parseHttpUrl,
+  validateUrl,
+} from "./url-guard";
 
 const allowed = new Set(["loja.exemplo.com"]);
 

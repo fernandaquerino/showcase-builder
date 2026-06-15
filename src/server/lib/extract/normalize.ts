@@ -4,76 +4,65 @@ import type {
   ExtractableField,
   ExtractionSource,
 } from "@/lib/validations/extract";
+import { normalizeUrlForCache } from "./cache-key";
 import { parseHttpUrl } from "./url-guard";
 
-const NAME_MAX_LENGTH = 160;
-const COLOR_MAX_LENGTH = 50;
+const LIMITS = {
+  name: 160,
+  color: 50,
+  category: 60,
+  brand: 100,
+  sku: 100,
+  size: 30,
+} as const;
 
-/** Raw, pre-normalization fields produced by the parser. */
 export type RawProductMetadata = {
+  canonicalUrl: string | null;
+  sku: string | null;
   name: string | null;
   imageUrl: string | null;
   price: string | number | null;
   color: string | null;
-  /** Which strategies contributed at least one field. */
+  category: string | null;
+  brand: string | null;
+  availableSizes: string[];
   sources: Set<ExtractionSource>;
 };
 
-export type NormalizedProduct = {
-  name: string | null;
-  imageUrl: string | null;
+export type NormalizedProduct = Omit<
+  RawProductMetadata,
+  "price" | "sources"
+> & {
   price: string | null;
-  color: string | null;
   fieldsFound: ExtractableField[];
   extractionSource: ExtractionSource;
-  /** `null` means no useful data (no name and no image) — i.e. NO_PRODUCT_DATA. */
   completeness: "complete" | "partial" | null;
 };
 
-function collapseWhitespace(value: string): string {
-  return value.replace(/\s+/g, " ").trim();
-}
-
 function cleanText(value: string | null, maxLength: number): string | null {
-  if (value === null) {
-    return null;
-  }
-  const cleaned = collapseWhitespace(value).slice(0, maxLength).trim();
-  return cleaned === "" ? null : cleaned;
+  const cleaned = value?.replace(/\s+/g, " ").trim().slice(0, maxLength).trim();
+  return cleaned || null;
 }
 
-/**
- * Normalizes a price from JSON-LD / Open Graph (number, `"199.90"`,
- * `"R$ 199,90"`, `"1.299,90"`, …) into a canonical decimal string, never a
- * float for persistence. Returns `null` for negative, missing or invalid input.
- */
 export function normalizeExtractedPrice(
   input: string | number | null | undefined,
 ): string | null {
-  if (input === null || input === undefined) {
-    return null;
-  }
-
+  if (input === null || input === undefined) return null;
   if (typeof input === "number") {
     return Number.isFinite(input) && input >= 0 ? input.toFixed(2) : null;
   }
 
   const trimmed = input.trim();
-  if (trimmed === "" || trimmed.includes("-")) {
-    return null;
-  }
+  if (trimmed === "" || trimmed.includes("-")) return null;
 
   const cleaned = trimmed.replace(/[^\d.,]/g, "");
-  if (cleaned === "") {
-    return null;
-  }
+  if (cleaned === "") return null;
 
   const hasComma = cleaned.includes(",");
   const hasDot = cleaned.includes(".");
   let decimal: string;
 
   if (hasComma && hasDot) {
-    // The right-most separator is the decimal one.
     decimal =
       cleaned.lastIndexOf(",") > cleaned.lastIndexOf(".")
         ? cleaned.replace(/\./g, "").replace(/,/g, ".")
@@ -95,66 +84,81 @@ export function normalizeExtractedPrice(
   }
 
   const numeric = Number(decimal);
-  if (!Number.isFinite(numeric) || numeric < 0) {
-    return null;
-  }
-
-  return numeric.toFixed(2);
+  return Number.isFinite(numeric) && numeric >= 0 ? numeric.toFixed(2) : null;
 }
 
-function normalizeImageUrl(value: string | null): string | null {
-  if (value === null) {
-    return null;
-  }
-  const url = parseHttpUrl(value.trim());
-  return url ? url.href : null;
+function normalizeHttpUrl(value: string | null): string | null {
+  if (value === null) return null;
+  return parseHttpUrl(value.trim())?.href ?? null;
 }
 
-function pickExtractionSource(sources: Set<ExtractionSource>): ExtractionSource {
-  if (sources.size === 0) {
-    return "meta";
-  }
-  if (sources.size > 1) {
-    return "mixed";
-  }
+function pickExtractionSource(
+  sources: Set<ExtractionSource>,
+): ExtractionSource {
+  if (sources.size === 0) return "meta";
+  if (sources.size > 1) return "mixed";
   return [...sources][0];
 }
 
-/**
- * Cleans and validates raw parser output. Decodes/trims text, enforces schema
- * limits, validates URLs and the price, and classifies completeness. A result
- * is useful when it has at least a name or an image.
- */
+function normalizeSizes(sizes: string[]): string[] {
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+
+  for (const size of sizes) {
+    const cleaned = cleanText(size, LIMITS.size);
+    if (!cleaned) continue;
+    const key = cleaned.toLocaleLowerCase("pt-BR");
+    if (!seen.has(key)) {
+      seen.add(key);
+      normalized.push(cleaned);
+    }
+  }
+
+  return normalized.slice(0, 30);
+}
+
 export function normalizeExtractedProduct(
   raw: RawProductMetadata,
 ): NormalizedProduct {
-  const name = cleanText(raw.name, NAME_MAX_LENGTH);
-  const color = cleanText(raw.color, COLOR_MAX_LENGTH);
-  const imageUrl = normalizeImageUrl(raw.imageUrl);
+  const canonicalUrl = raw.canonicalUrl
+    ? normalizeUrlForCache(raw.canonicalUrl)
+    : null;
+  const sku = cleanText(raw.sku, LIMITS.sku);
+  const name = cleanText(raw.name, LIMITS.name);
+  const imageUrl = normalizeHttpUrl(raw.imageUrl);
   const price = normalizeExtractedPrice(raw.price);
+  const color = cleanText(raw.color, LIMITS.color);
+  const category = cleanText(raw.category, LIMITS.category);
+  const brand = cleanText(raw.brand, LIMITS.brand);
+  const availableSizes = normalizeSizes(raw.availableSizes);
 
-  const fieldsFound: ExtractableField[] = [];
-  if (name) fieldsFound.push("name");
-  if (imageUrl) fieldsFound.push("imageUrl");
-  if (price) fieldsFound.push("price");
-  if (color) fieldsFound.push("color");
-
-  let completeness: NormalizedProduct["completeness"];
-  if (name && imageUrl) {
-    completeness = "complete";
-  } else if (name || imageUrl) {
-    completeness = "partial";
-  } else {
-    completeness = null;
-  }
-
-  return {
+  const values: Record<ExtractableField, unknown> = {
     name,
     imageUrl,
     price,
     color,
+    category,
+    brand,
+    sku,
+    availableSizes: availableSizes.length > 0 ? availableSizes : null,
+  };
+  const fieldsFound = Object.entries(values)
+    .filter(([, value]) => value !== null)
+    .map(([field]) => field as ExtractableField);
+
+  return {
+    canonicalUrl,
+    sku,
+    name,
+    imageUrl,
+    price,
+    color,
+    category,
+    brand,
+    availableSizes,
     fieldsFound,
     extractionSource: pickExtractionSource(raw.sources),
-    completeness,
+    completeness:
+      name && imageUrl ? "complete" : name || imageUrl ? "partial" : null,
   };
 }

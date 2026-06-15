@@ -8,14 +8,29 @@ function successData(
   overrides: Partial<ExtractionSuccessData> = {},
 ): ExtractionSuccessData {
   return {
-    sourceUrl: "https://loja.exemplo.com/p/1",
+    affiliateUrl: "https://loja.exemplo.com/p/1?utm_campaign=criadora",
+    sourceUrl: "https://loja.exemplo.com/p/1?utm_campaign=criadora",
+    canonicalUrl: "https://loja.exemplo.com/p/1",
     finalUrl: "https://loja.exemplo.com/p/1",
+    sku: "SKU-1",
     name: "Jaqueta",
     imageUrl: "https://a/x.jpg",
     price: "199.90",
     color: "Azul",
-    fieldsFound: ["name", "imageUrl", "price", "color"],
-    extractionSource: "json-ld",
+    category: "Jaquetas",
+    brand: "Mindset",
+    availableSizes: ["P", "M"],
+    fieldsFound: [
+      "name",
+      "imageUrl",
+      "price",
+      "color",
+      "category",
+      "brand",
+      "sku",
+      "availableSizes",
+    ],
+    extractionSource: "mixed",
     completeness: "complete",
     fromCache: false,
     ...overrides,
@@ -29,6 +44,13 @@ function mockFetchJson(payload: unknown) {
   );
 }
 
+const baseProps = {
+  mode: "create" as const,
+  onApply: vi.fn(() => ({ filled: 0, preserved: 0 })),
+  onUrlChange: vi.fn(),
+  onRevealForm: vi.fn(),
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -38,90 +60,106 @@ afterEach(() => {
 });
 
 describe("ProductLinkExtractor", () => {
-  it("renders the field and the search button", () => {
-    render(<ProductLinkExtractor onApply={() => ({ filled: 0, preserved: 0 })} />);
+  it("renders the link-first actions", () => {
+    render(<ProductLinkExtractor {...baseProps} />);
 
-    expect(screen.getByLabelText("Link do produto")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Buscar informações/ }),
+      screen.getByLabelText("Cole seu link de afiliado"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Buscar produto" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Prefiro preencher manualmente" }),
     ).toBeInTheDocument();
   });
 
-  it("applies a complete result and shows success", async () => {
+  it("reveals the manual form without making a request", () => {
+    const onRevealForm = vi.fn();
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<ProductLinkExtractor {...baseProps} onRevealForm={onRevealForm} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Prefiro preencher manualmente" }),
+    );
+    expect(onRevealForm).toHaveBeenCalledOnce();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("applies a complete result and reveals the form", async () => {
     mockFetchJson({ success: true, data: successData() });
-    const onApply = vi.fn(() => ({ filled: 4, preserved: 0 }));
+    const onApply = vi.fn(() => ({ filled: 5, preserved: 0 }));
+    const onRevealForm = vi.fn();
+    render(
+      <ProductLinkExtractor
+        {...baseProps}
+        onApply={onApply}
+        onRevealForm={onRevealForm}
+      />,
+    );
 
-    render(<ProductLinkExtractor onApply={onApply} />);
-
-    fireEvent.change(screen.getByLabelText("Link do produto"), {
-      target: { value: "https://loja.exemplo.com/p/1" },
+    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+      target: { value: successData().affiliateUrl },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Buscar informações/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));
 
-    expect(
-      await screen.findByText("Informações encontradas"),
-    ).toBeInTheDocument();
-    expect(onApply).toHaveBeenCalledTimes(1);
+    expect(await screen.findByText("Produto encontrado")).toBeInTheDocument();
+    expect(onApply).toHaveBeenCalledOnce();
+    expect(onRevealForm).toHaveBeenCalledOnce();
   });
 
-  it("shows the partial message and preserved note", async () => {
+  it("shows partial and dirty-field messages", async () => {
     mockFetchJson({
       success: true,
       data: successData({ completeness: "partial", imageUrl: null }),
     });
+    render(
+      <ProductLinkExtractor
+        {...baseProps}
+        onApply={() => ({ filled: 1, preserved: 2 })}
+      />,
+    );
 
-    render(<ProductLinkExtractor onApply={() => ({ filled: 1, preserved: 2 })} />);
-
-    fireEvent.change(screen.getByLabelText("Link do produto"), {
-      target: { value: "https://loja.exemplo.com/p/1" },
+    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+      target: { value: successData().affiliateUrl },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Buscar informações/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));
 
     expect(
-      await screen.findByText("Encontramos parte das informações"),
+      await screen.findByText("Encontramos algumas informações"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Alguns campos que você já havia preenchido foram mantidos.",
-      ),
+      screen.getByText("Mantivemos os campos que você já tinha preenchido."),
     ).toBeInTheDocument();
   });
 
-  it("shows a friendly error and never calls onApply on failure", async () => {
+  it("opens the manual fallback after a failure", async () => {
     mockFetchJson({
       success: false,
-      error: { code: "UPSTREAM_BLOCKED", message: "A loja não permitiu agora." },
+      error: { code: "UPSTREAM_BLOCKED", message: "Tente manualmente." },
     });
-    const onApply = vi.fn(() => ({ filled: 0, preserved: 0 }));
+    const onRevealForm = vi.fn();
+    render(<ProductLinkExtractor {...baseProps} onRevealForm={onRevealForm} />);
 
-    render(<ProductLinkExtractor onApply={onApply} />);
-
-    fireEvent.change(screen.getByLabelText("Link do produto"), {
-      target: { value: "https://loja.exemplo.com/p/1" },
+    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+      target: { value: successData().affiliateUrl },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Buscar informações/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "A loja não permitiu agora.",
+      "Não conseguimos encontrar os dados automaticamente",
     );
-    expect(onApply).not.toHaveBeenCalled();
+    expect(onRevealForm).toHaveBeenCalledOnce();
   });
 
-  it("falls back to a manual message when the request throws", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => {
-        throw new Error("network down");
-      }),
-    );
-
-    render(<ProductLinkExtractor onApply={() => ({ filled: 0, preserved: 0 })} />);
-
-    fireEvent.change(screen.getByLabelText("Link do produto"), {
-      target: { value: "https://loja.exemplo.com/p/1" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /Buscar informações/ }));
-
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
+  it("uses the re-extraction label in edit mode", () => {
+    render(<ProductLinkExtractor {...baseProps} mode="edit" />);
+    expect(
+      screen.getByRole("button", { name: "Buscar informações novamente" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Prefiro preencher manualmente" }),
+    ).not.toBeInTheDocument();
   });
 });
