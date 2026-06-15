@@ -202,7 +202,7 @@ O campo aceita formato brasileiro (`99,90`, `129`, `1.299,90`) e é normalizado
 para decimal canônico (`numeric`, nunca float) antes de salvar. Na exibição volta
 para `R$ 199,90`.
 
-### Imagens por URL
+### Imagens de produto por URL
 
 Nesta fase as imagens são **apenas links** (sem upload). Como o host é arbitrário,
 a área administrativa usa `<img>` nativo com tamanho fixo (evita layout shift) e
@@ -220,7 +220,7 @@ Não há **nova migration** nesta fase: a tabela `products` já foi criada na Fa
 
 ### Limitações atuais (após a Fase 2)
 
-- Sem upload de imagens (Vercel Blob / Cloudinary).
+- Sem upload de imagens de produto (Vercel Blob / Cloudinary).
 - Página pública `[handle]`, filtros públicos, compartilhamento e analytics
   ainda não implementados.
 
@@ -378,15 +378,16 @@ Dois ajustes de UX focados em reduzir a fricção para a criadora.
 O campo de URL da capa foi substituído por **upload de arquivo**. A criadora
 escolhe uma imagem do celular/computador; nada de copiar endereços.
 
-- **Storage:** [Vercel Blob](https://vercel.com/docs/storage/vercel-blob).
+- **Storage:** [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) em
+  produção; em desenvolvimento local, sem token, salva em `public/uploads`.
 - **Variável de ambiente** (server-only, nunca `NEXT_PUBLIC`):
 
   ```env
   BLOB_READ_WRITE_TOKEN=""
   ```
 
-  Vazio desativa o upload (o restante do app continua funcionando). O token só é
-  lido no servidor.
+  Vazio em desenvolvimento local usa `public/uploads`. Em produção, configure o
+  token; sem ele o upload fica indisponível. O token só é lido no servidor.
 
 - **Formatos aceitos:** JPG, PNG, WebP. **Limite:** 5 MB.
 - **Rejeitados:** SVG, GIF, PDF, MIME inválido, arquivos acima do limite. A

@@ -147,6 +147,7 @@ export function ProductList({
       </p>
 
       <DndContext
+        id={`products-${liveId}`}
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}

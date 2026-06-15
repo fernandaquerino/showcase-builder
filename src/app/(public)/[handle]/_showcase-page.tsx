@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
-import { CalendarDays, Clock, ExternalLink } from "lucide-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { CreatorFooter } from "@/components/public/creator-footer";
+import { LiveQuickInfo } from "@/components/public/live-quick-info";
 import { ProductBrowser } from "@/components/public/product-browser";
 import { PublicEmptyState } from "@/components/public/public-empty-state";
+import { PublicLiveHero } from "@/components/public/public-live-hero";
 import { ShareShowcase } from "@/components/public/share-showcase";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { formatLiveDate, formatLiveTime } from "@/lib/format";
 import { normalizeHandle } from "@/lib/handle";
+import { getPublicLiveState } from "@/lib/public-live-state";
 import { buildPublicUrl } from "@/lib/public-url";
 import { slugify } from "@/lib/slug";
 import {
@@ -29,15 +25,6 @@ export type PublicShowcaseRouteParams = {
 
 function publicUrl(handle: string, slug?: string): string {
   return buildPublicUrl(slug ? `/${handle}/${slug}` : `/${handle}`);
-}
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
 }
 
 function assertValidHandle(handle: string): string {
@@ -81,8 +68,19 @@ function metadataForShowcase(
     };
   }
 
-  const title = `Live da ${showcase.creator.name} | Produtos escolhidos`;
-  const description = "Confira os produtos, tamanhos, cores e links de compra apresentados nesta live.";
+  const state = getPublicLiveState({
+    liveDate: showcase.live.liveDate,
+    liveTime: showcase.live.liveTime,
+  });
+  const title = `${showcase.live.title} | ${showcase.creator.name}`;
+  const time = formatLiveTime(showcase.live.liveTime);
+  const scheduledDescription = time
+    ? `Live agendada para ${formatLiveDate(showcase.live.liveDate)} às ${time}.`
+    : `Live agendada para ${formatLiveDate(showcase.live.liveDate)}.`;
+  const description =
+    state === "scheduled"
+      ? scheduledDescription
+      : "Confira os produtos apresentados nesta live.";
   const image =
     showcase.live.coverImageUrl ??
     showcase.products.find((product) => product.imageUrl)?.imageUrl;
@@ -97,7 +95,9 @@ function metadataForShowcase(
       description,
       url,
       type: "website",
-      images: image ? [{ url: image, alt: showcase.live.title }] : undefined,
+      images: image
+        ? [{ url: image, alt: `Capa da live ${showcase.live.title}` }]
+        : undefined,
     },
     twitter: {
       card: "summary_large_image",
@@ -133,29 +133,6 @@ export async function generatePublicShowcaseMetadata({
   );
 }
 
-function LiveInfo({ showcase }: { showcase: PublicShowcase }) {
-  const live = showcase.live;
-
-  if (!live) {
-    return null;
-  }
-
-  return (
-    <div className="mt-6 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-      <span className="inline-flex items-center gap-2">
-        <CalendarDays className="size-4" aria-hidden="true" />
-        {formatLiveDate(live.liveDate)}
-      </span>
-      {live.liveTime && (
-        <span className="inline-flex items-center gap-2">
-          <Clock className="size-4" aria-hidden="true" />
-          {formatLiveTime(live.liveTime)}
-        </span>
-      )}
-    </div>
-  );
-}
-
 export async function PublicShowcasePageContent({
   handle,
   slug,
@@ -174,69 +151,33 @@ export async function PublicShowcasePageContent({
   const shareUrl = publicUrl(normalizedHandle, showcase.live?.slug);
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-stone-50 text-foreground">
       <a
         href="#conteudo"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-card focus:px-4 focus:py-2 focus:shadow"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow"
       >
         Pular para o conteúdo
       </a>
 
-      <div className="mx-auto w-full max-w-5xl px-5 py-6 sm:px-8 sm:py-10">
-        <header className="overflow-hidden rounded-[2rem] border bg-card shadow-sm">
-          {showcase.live?.coverImageUrl && (
-            <div className="aspect-[16/9] w-full overflow-hidden bg-muted sm:aspect-[3/1]">
-              {/* Remote creator-provided image URL; keep native img to avoid an unrestricted next/image proxy. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={showcase.live.coverImageUrl}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            </div>
-          )}
+      <PublicLiveHero
+        creator={showcase.creator}
+        live={showcase.live}
+        products={showcase.products}
+      />
 
-          <div className="flex flex-col items-start gap-5 p-5 sm:flex-row sm:items-center sm:p-8">
-            <Avatar className="size-20 border bg-secondary">
-              {showcase.creator.avatarUrl && (
-                <AvatarImage
-                  src={showcase.creator.avatarUrl}
-                  alt={`Foto de ${showcase.creator.name}`}
-                />
-              )}
-              <AvatarFallback className="text-xl">
-                {initials(showcase.creator.name)}
-              </AvatarFallback>
-            </Avatar>
+      <div
+        id="conteudo"
+        className="mx-auto w-full max-w-6xl space-y-10 px-5 py-8 sm:px-8 sm:py-12 lg:px-10"
+      >
+        {showcase.live ? (
+          <LiveQuickInfo
+            creator={showcase.creator}
+            live={showcase.live}
+            productCount={showcase.products.length}
+          />
+        ) : null}
 
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-primary">
-                @{showcase.creator.handle}
-              </p>
-              <h1 className="mt-1 text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
-                {showcase.live?.title ?? showcase.creator.name}
-              </h1>
-              {showcase.live?.instagramUrl && (
-                <Button asChild variant="outline" className="mt-5">
-                  <Link
-                    href={showcase.live.instagramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="size-4" aria-hidden="true" />
-                    Ver no Instagram
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="px-5 pb-5 sm:px-8 sm:pb-8">
-            <LiveInfo showcase={showcase} />
-          </div>
-        </header>
-
-        <div id="conteudo" className="mt-8 space-y-8">
+        <div className="space-y-10">
           {!showcase.live ? (
             <PublicEmptyState
               title="Novidades em breve"
@@ -247,17 +188,12 @@ export async function PublicShowcasePageContent({
               <ProductBrowser
                 products={showcase.products}
               />
-              <ShareShowcase url={shareUrl} />
+              <ShareShowcase url={shareUrl} creator={showcase.creator} />
             </>
           )}
         </div>
 
-        <footer className="py-8 text-center text-sm text-muted-foreground">
-          <p>Vitrine criada com Live Showcase Builder.</p>
-          <Button asChild variant="link" className="mt-2">
-            <Link href="/">Criar minha vitrine</Link>
-          </Button>
-        </footer>
+        <CreatorFooter creator={showcase.creator} />
       </div>
     </main>
   );

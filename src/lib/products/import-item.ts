@@ -1,6 +1,15 @@
+import { capitalizeFirst } from "@/lib/string";
 import type { ExtractionSuccessData } from "@/lib/validations/extract";
-import type { ProductFormValues } from "@/lib/validations/product";
+import {
+  normalizeProductCategory,
+  type ProductFormValues,
+} from "@/lib/validations/product";
 import type { ParsedLink } from "./parse-links";
+
+/** Canonical decimal price (e.g. "129.90") → BR form input ("129,90"). */
+function canonicalPriceToInput(price: string | null): string {
+  return price ? price.replace(".", ",") : "";
+}
 
 export type ImportProductStatus =
   | "pending"
@@ -99,15 +108,19 @@ export function applyExtractionToItem(
   item: ImportProductItem,
   data: ExtractionSuccessData,
 ): ImportProductItem {
+  const extractedName = data.name ? capitalizeFirst(data.name) : null;
+  const extractedCategory = normalizeProductCategory(data.category);
+
   const next: ImportProductItem = {
     ...item,
     canonicalUrl: data.canonicalUrl ?? item.canonicalUrl,
     sku: data.sku ?? item.sku,
-    name: item.manuallyEdited && item.name ? item.name : data.name ?? item.name,
+    name:
+      item.manuallyEdited && item.name ? item.name : extractedName ?? item.name,
     category:
       item.manuallyEdited && item.category
         ? item.category
-        : data.category ?? item.category,
+        : extractedCategory ?? item.category,
     color: item.manuallyEdited && item.color ? item.color : data.color ?? item.color,
     price: item.manuallyEdited && item.price ? item.price : data.price ?? item.price,
     imageUrl:
@@ -133,7 +146,9 @@ export function itemToFormValues(item: ImportProductItem): ProductFormValues {
     color: item.color ?? "",
     imageUrl: item.imageUrl,
     productUrl: item.affiliateUrl,
-    price: item.price ?? "",
+    // item.price is a canonical decimal ("129.90"); the schema expects BR input
+    // ("129,90"), where "." is a thousands separator. Convert before saving.
+    price: canonicalPriceToInput(item.price),
     sourceUrl: item.affiliateUrl,
   };
 }

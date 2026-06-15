@@ -13,9 +13,9 @@ import {
   type ParsedLink,
 } from "@/lib/products/parse-links";
 
-const PLACEHOLDER = `https://www.cea.com.br/produto-1/p?utm_campaign=pambraga
-https://www.cea.com.br/produto-2/p?utm_campaign=pambraga
-https://www.cea.com.br/produto-3/p?utm_campaign=pambraga`;
+const PLACEHOLDER = `https://www.cea.com.br/produto-1/p?utm_campaign=
+https://www.cea.com.br/produto-2/p?utm_campaign=
+https://www.cea.com.br/produto-3/p?utm_campaign=`;
 
 const STATUS_STYLES: Record<ParsedLink["status"], string> = {
   valid: "text-success",

@@ -23,8 +23,8 @@ export function PublicProductCard({
   const price = formatBrlPrice(product.price);
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card shadow-sm">
-      <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200/70 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0">
+      <div className="relative aspect-[3/4] overflow-hidden bg-stone-100">
         {showFallback ? (
           <div className="flex size-full flex-col items-center justify-center gap-2 px-3 text-center text-xs text-muted-foreground">
             <ImageOff className="size-6" aria-hidden="true" />
@@ -38,18 +38,19 @@ export function PublicProductCard({
             className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : "auto"}
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
             onError={() => setFailedSrc(product.imageUrl)}
           />
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 p-3">
-        <Badge variant="secondary" className="w-fit">
+      <div className="flex flex-1 flex-col gap-3 p-3 sm:p-4">
+        <Badge variant="secondary" className="w-fit rounded-full px-2.5">
           {product.category}
         </Badge>
 
         <div className="space-y-1">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-5">
+          <h3 className="line-clamp-3 text-sm font-semibold leading-5 text-stone-950 sm:text-base sm:leading-6">
             {product.name}
           </h3>
           {(product.size || product.color) && (
@@ -63,9 +64,15 @@ export function PublicProductCard({
 
         <div className="mt-auto space-y-3">
           {price && (
-            <p className="text-base font-semibold tracking-tight">{price}</p>
+            <p className="text-lg font-semibold tracking-tight text-stone-950">
+              {price}
+            </p>
           )}
-          <Button asChild size="sm" className={cn("min-h-11 w-full px-3")}>
+          <Button
+            asChild
+            size="sm"
+            className={cn("min-h-11 w-full rounded-full px-3")}
+          >
             <a
               href={product.productUrl}
               target="_blank"

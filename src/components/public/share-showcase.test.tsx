@@ -4,11 +4,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ShareShowcase } from "./share-showcase";
 
 const writeText = vi.fn();
+const share = vi.fn();
 
 beforeEach(() => {
   vi.clearAllMocks();
   Object.assign(navigator, {
     clipboard: { writeText },
+    share: undefined,
   });
 });
 
@@ -34,6 +36,23 @@ describe("ShareShowcase", () => {
       expect(writeText).toHaveBeenCalledWith("https://exemplo.com/pam");
     });
     expect(screen.getByText("O link está pronto para colar.")).toBeInTheDocument();
+  });
+
+  it("uses the Web Share API when available", async () => {
+    share.mockResolvedValue(undefined);
+    Object.assign(navigator, { share });
+
+    render(<ShareShowcase url="https://exemplo.com/pam" />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Compartilhar" }));
+
+    await waitFor(() => {
+      expect(share).toHaveBeenCalledWith({
+        title: "Vitrine da live",
+        text: "Olha os produtos desta live.",
+        url: "https://exemplo.com/pam",
+      });
+    });
   });
 
   it("announces copy errors", async () => {

@@ -5,6 +5,7 @@ import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { parseBrlPrice } from "@/lib/price";
 import {
   Sheet,
   SheetContent,
@@ -40,7 +41,8 @@ function draftFromItem(item: ImportProductItem): Draft {
     category: item.category,
     size: item.size ?? "",
     color: item.color ?? "",
-    price: item.price ?? "",
+    // Show the canonical decimal ("129.90") as BR input ("129,90").
+    price: item.price ? item.price.replace(".", ",") : "",
     imageUrl: item.imageUrl,
   };
 }
@@ -84,12 +86,22 @@ export function ProductImportEditSheet({
     if (!item) {
       return;
     }
+    // Keep item.price as a canonical decimal. Parse the BR input back; on
+    // invalid input keep the previous value so a typo never wipes a good price.
+    const parsedPrice = parseBrlPrice(draft.price);
+    const price =
+      parsedPrice.kind === "valid"
+        ? parsedPrice.value
+        : parsedPrice.kind === "empty"
+          ? null
+          : item.price;
+
     onSave(item.id, {
       name: draft.name,
       category: draft.category,
       size: draft.size.trim() === "" ? null : draft.size,
       color: draft.color.trim() === "" ? null : draft.color,
-      price: draft.price.trim() === "" ? null : draft.price,
+      price,
       imageUrl: draft.imageUrl,
     });
     onOpenChange(false);

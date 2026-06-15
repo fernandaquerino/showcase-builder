@@ -34,13 +34,13 @@ describe("ProductBrowser", () => {
 
     expect(screen.getByText("2 de 2 produtos")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Jaquetas (1)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Jaquetas 1" }));
 
     expect(screen.getByText("1 de 2 produtos")).toBeInTheDocument();
     expect(screen.getByText("Jaqueta preta")).toBeInTheDocument();
     expect(screen.queryByText("Blusa branca")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Tudo (2)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tudo 2" }));
     expect(screen.getByText("2 de 2 produtos")).toBeInTheDocument();
   });
 

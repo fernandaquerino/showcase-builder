@@ -28,17 +28,23 @@ export function ProductBrowser({ products }: ProductBrowserProps) {
     return (
       <PublicEmptyState
         title="Os produtos desta live serão adicionados em breve."
-        description="Volte em alguns instantes para conferir a vitrine completa."
+        description="A vitrine já está no ar. Volte em instantes para conferir os links escolhidos pela criadora."
       />
     );
   }
 
   return (
-    <section aria-labelledby="products-heading" className="space-y-5">
+    <section id="produtos" aria-labelledby="products-heading" className="space-y-6 scroll-mt-6">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 id="products-heading" className="text-2xl font-semibold">
-            Vitrine da live
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+            Vitrine
+          </p>
+          <h2
+            id="products-heading"
+            className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl"
+          >
+            Produtos escolhidos
           </h2>
           <p className="mt-1 text-sm text-muted-foreground" aria-live="polite">
             {visibleProducts.length} de {products.length} produtos
@@ -46,31 +52,34 @@ export function ProductBrowser({ products }: ProductBrowserProps) {
         </div>
       </div>
 
-      <div
-        className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:px-0"
-        aria-label="Filtrar produtos por categoria"
-      >
-        <Button
-          type="button"
-          variant={activeCategory === ALL ? "default" : "outline"}
-          aria-pressed={activeCategory === ALL}
-          className="min-h-11 shrink-0 rounded-full"
-          onClick={() => setActiveCategory(ALL)}
+      <div className="sticky top-0 z-20 -mx-5 border-y border-stone-200/70 bg-stone-50/88 px-5 py-3 backdrop-blur sm:top-2 sm:mx-0 sm:rounded-2xl sm:border sm:px-3">
+        <div
+          className="flex gap-2 overflow-x-auto pb-1 sm:pb-0"
+          aria-label="Filtrar produtos por categoria"
         >
-          Tudo ({products.length})
-        </Button>
-        {categories.map((category) => (
           <Button
-            key={category.label}
             type="button"
-            variant={activeCategory === category.label ? "default" : "outline"}
-            aria-pressed={activeCategory === category.label}
-            className="min-h-11 shrink-0 rounded-full"
-            onClick={() => setActiveCategory(category.label)}
+            variant={activeCategory === ALL ? "default" : "outline"}
+            aria-pressed={activeCategory === ALL}
+            className="min-h-11 shrink-0 rounded-full px-5"
+            onClick={() => setActiveCategory(ALL)}
           >
-            {category.label} ({category.count})
+            Tudo <span className="ml-1 opacity-75">{products.length}</span>
           </Button>
-        ))}
+          {categories.map((category) => (
+            <Button
+              key={category.label}
+              type="button"
+              variant={activeCategory === category.label ? "default" : "outline"}
+              aria-pressed={activeCategory === category.label}
+              className="min-h-11 shrink-0 rounded-full px-5"
+              onClick={() => setActiveCategory(category.label)}
+            >
+              {category.label}
+              <span className="ml-1 opacity-75">{category.count}</span>
+            </Button>
+          ))}
+        </div>
       </div>
 
       {visibleProducts.length === 0 ? (
@@ -83,7 +92,7 @@ export function ProductBrowser({ products }: ProductBrowserProps) {
           }}
         />
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
           {visibleProducts.map((product, index) => (
             <PublicProductCard
               key={product.id}

@@ -10,8 +10,6 @@ import { Label } from "@/components/ui/label";
 import { formatBrlPrice } from "@/lib/price";
 import type { ImportProductItem } from "@/lib/products/import-item";
 import { ImportStatusBadge } from "./import-status-badge";
-import { normalizeProductCategory } from "@/lib/validations/product";
-import { capitalizeFirst } from "@/lib/string";
 
 export type ProductImportPreviewCardProps = {
   item: ImportProductItem;
@@ -73,10 +71,10 @@ export function ProductImportPreviewCard({
 
       <div className="space-y-1">
         {item.category && (
-          <p className="text-xs font-medium text-muted-foreground">{normalizeProductCategory(item.category)}</p>
+          <p className="text-xs font-medium text-muted-foreground">{item.category}</p>
         )}
         <h3 className="line-clamp-2 text-sm font-semibold leading-5">
-          {capitalizeFirst(item.name) || "Produto sem nome"}
+          {item.name || "Produto sem nome"}
         </h3>
         {(price || item.color) && (
           <p className="text-sm text-muted-foreground">

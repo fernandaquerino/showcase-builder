@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
-import { getBlobReadWriteToken } from "@/lib/env";
 import {
   COVER_IMAGE_MAX_BYTES,
   COVER_IMAGE_MESSAGES,
@@ -9,7 +8,10 @@ import {
   sniffCoverImageExtension,
   validateCoverImageFile,
 } from "@/lib/validations/cover-image";
-import { uploadCoverImage } from "@/server/lib/storage/cover-image";
+import {
+  isCoverUploadAvailable,
+  uploadCoverImage,
+} from "@/server/lib/storage/cover-image";
 
 // Blob upload + `node:crypto` need the Node.js runtime (not Edge).
 export const runtime = "nodejs";
@@ -31,7 +33,7 @@ export async function POST(
     return error("Sua sessão expirou. Entre novamente.", 401);
   }
 
-  if (!getBlobReadWriteToken()) {
+  if (!isCoverUploadAvailable()) {
     return error(COVER_IMAGE_MESSAGES.uploadFailed, 503);
   }
 
