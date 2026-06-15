@@ -18,13 +18,19 @@ import {
 } from "@/server/db/queries/products";
 
 vi.mock("@/lib/auth", () => ({ auth: vi.fn() }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+}));
 vi.mock("@/server/db/queries/products", () => ({
   createProduct: vi.fn(),
   updateProduct: vi.fn(),
   deleteProduct: vi.fn(),
   reorderProducts: vi.fn(),
   getProductsByLiveIdForUser: vi.fn(),
+}));
+vi.mock("@/server/db/queries/public-showcase", () => ({
+  getPublishedLiveContextById: vi.fn(),
 }));
 
 const authMock = auth as unknown as Mock;

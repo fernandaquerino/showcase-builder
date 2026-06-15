@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
+import { revalidatePublicShowcase } from "@/server/cache/showcase";
 import { appendSuffix } from "@/lib/slug";
 import {
   liveIdSchema,
@@ -18,6 +19,7 @@ import {
   unpublishLive,
   updateLive,
 } from "@/server/db/queries/lives";
+import { getPublishedLiveContextById } from "@/server/db/queries/public-showcase";
 
 const MAX_SLUG_ATTEMPTS = 20;
 const SESSION_EXPIRED = "Sua sessão expirou. Entre novamente.";
@@ -40,7 +42,13 @@ async function getSessionUserId(): Promise<string | null> {
 function revalidateLive(liveId: string): void {
   revalidatePath("/admin");
   revalidatePath(`/admin/lives/${liveId}`);
-  // Public page revalidation (`/[handle]/[slug]`) lands with Phase 5.
+}
+
+async function revalidatePublicLive(liveId: string): Promise<void> {
+  const context = await getPublishedLiveContextById(liveId);
+  if (context) {
+    revalidatePublicShowcase(context);
+  }
 }
 
 /**
@@ -161,6 +169,9 @@ export async function updateLiveAction(
     }
 
     revalidateLive(live.id);
+    if (live.status === "published") {
+      await revalidatePublicLive(live.id);
+    }
     return { success: true };
   } catch (error) {
     if (isUniqueViolation(error)) {
@@ -195,6 +206,7 @@ export async function publishLiveAction(liveId: string): Promise<ActionResult> {
     }
 
     revalidateLive(published.id);
+    await revalidatePublicLive(published.id);
     return { success: true };
   } catch (error) {
     console.error("Publish live failed.", {
@@ -223,6 +235,7 @@ export async function unpublishLiveAction(
   }
 
   try {
+    const contextBefore = await getPublishedLiveContextById(parsedId.data);
     const live = await unpublishLive(parsedId.data, userId);
 
     if (!live) {
@@ -230,6 +243,9 @@ export async function unpublishLiveAction(
     }
 
     revalidateLive(live.id);
+    if (contextBefore?.status === "published") {
+      revalidatePublicShowcase(contextBefore);
+    }
     return { success: true };
   } catch (error) {
     console.error("Unpublish live failed.", {
@@ -256,6 +272,7 @@ export async function deleteLiveAction(liveId: string): Promise<ActionResult> {
   }
 
   try {
+    const contextBefore = await getPublishedLiveContextById(parsedId.data);
     const live = await deleteLive(parsedId.data, userId);
 
     if (!live) {
@@ -263,6 +280,9 @@ export async function deleteLiveAction(liveId: string): Promise<ActionResult> {
     }
 
     revalidateLive(live.id);
+    if (contextBefore?.status === "published") {
+      revalidatePublicShowcase(contextBefore);
+    }
     return { success: true };
   } catch (error) {
     console.error("Delete live failed.", {

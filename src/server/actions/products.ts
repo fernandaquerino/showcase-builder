@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
+import { revalidatePublicShowcase } from "@/server/cache/showcase";
 import {
   productIdSchema,
   productInputSchema,
@@ -18,6 +19,7 @@ import {
   reorderProducts,
   updateProduct,
 } from "@/server/db/queries/products";
+import { getPublishedLiveContextById } from "@/server/db/queries/public-showcase";
 
 const SESSION_EXPIRED = "Sua sessão expirou. Entre novamente.";
 const NOT_FOUND = "Não encontramos esse produto.";
@@ -34,7 +36,13 @@ async function getSessionUserId(): Promise<string | null> {
 
 function revalidateLive(liveId: string): void {
   revalidatePath(`/admin/lives/${liveId}`);
-  // Public page revalidation (`/[handle]/[slug]`) lands with Phase 5.
+}
+
+async function revalidatePublicLiveIfPublished(liveId: string): Promise<void> {
+  const context = await getPublishedLiveContextById(liveId);
+  if (context?.status === "published") {
+    revalidatePublicShowcase(context);
+  }
 }
 
 function logFailure(message: string, error: unknown): void {
@@ -73,6 +81,7 @@ export async function createProductAction(
     }
 
     revalidateLive(parsedLiveId.data);
+    await revalidatePublicLiveIfPublished(parsedLiveId.data);
     return { success: true, data: { liveId: parsedLiveId.data } };
   } catch (error) {
     logFailure("Create product failed.", error);
@@ -117,6 +126,7 @@ export async function updateProductAction(
     }
 
     revalidateLive(parsedLiveId.data);
+    await revalidatePublicLiveIfPublished(parsedLiveId.data);
     return { success: true };
   } catch (error) {
     logFailure("Update product failed.", error);
@@ -150,6 +160,7 @@ export async function deleteProductAction(
     }
 
     revalidateLive(parsedLiveId.data);
+    await revalidatePublicLiveIfPublished(parsedLiveId.data);
     return { success: true };
   } catch (error) {
     logFailure("Delete product failed.", error);
@@ -190,6 +201,7 @@ export async function reorderProductsAction(
     }
 
     revalidateLive(parsedLiveId.data);
+    await revalidatePublicLiveIfPublished(parsedLiveId.data);
     return { success: true };
   } catch (error) {
     logFailure("Reorder products failed.", error);
@@ -239,6 +251,7 @@ async function moveProduct(
     }
 
     revalidateLive(parsedLiveId.data);
+    await revalidatePublicLiveIfPublished(parsedLiveId.data);
     return { success: true };
   } catch (error) {
     logFailure("Move product failed.", error);

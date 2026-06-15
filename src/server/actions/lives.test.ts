@@ -16,7 +16,10 @@ import {
 } from "@/server/db/queries/lives";
 
 vi.mock("@/lib/auth", () => ({ auth: vi.fn() }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+}));
 vi.mock("@/server/db/queries/lives", () => ({
   createLive: vi.fn(),
   updateLive: vi.fn(),
@@ -24,6 +27,9 @@ vi.mock("@/server/db/queries/lives", () => ({
   unpublishLive: vi.fn(),
   deleteLive: vi.fn(),
   isLiveSlugAvailable: vi.fn(),
+}));
+vi.mock("@/server/db/queries/public-showcase", () => ({
+  getPublishedLiveContextById: vi.fn(),
 }));
 
 // `auth` is heavily overloaded (middleware/route/RSC); treat it as a plain mock.

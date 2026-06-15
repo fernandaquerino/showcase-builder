@@ -686,6 +686,61 @@ Extração de metadados de páginas públicas é comum, mas vale: respeitar `rob
 
 ---
 
+## Fase 4 — Página pública da live
+
+A vitrine pública fica em `/{handle}` e não exige login. Ela resolve a criadora
+por `users.handle`, busca apenas a live `published` e lista os produtos por
+`position ASC` com uma query própria em
+`src/server/db/queries/public-showcase.ts`, selecionando somente campos públicos.
+
+### Experiência pública
+
+- Cabeçalho mobile-first com avatar/iniciais, nome, `@handle`, título, subtítulo,
+  loja, data, horário e plataforma quando existirem.
+- Filtros de categoria derivados dos produtos, sem tabela de categorias. O
+  filtro é client-side, com chips roláveis, contador dinâmico e estado vazio por
+  categoria.
+- Cards públicos com imagem em proporção fixa, fallback de imagem, nome,
+  categoria, tamanho/cor opcionais, preço em BRL e link externo seguro
+  (`target="_blank"` + `rel="noopener noreferrer sponsored"`).
+- Compartilhamento com WhatsApp (`https://wa.me/?text=...`) e cópia de link via
+  Clipboard API com feedback acessível.
+- Estados amigáveis para handle inexistente, criadora sem live publicada, live
+  publicada sem produtos, loading e erro.
+
+### Metadata, OG e cache
+
+- `generateMetadata` monta title, description, canonical, Open Graph e Twitter
+  card a partir da criadora, live e primeira imagem de produto disponível.
+- `opengraph-image.tsx` gera uma imagem OG dinâmica simples com fallback visual.
+- A query pública usa cache com tags `showcase:{handle}` e `live:{liveId}`.
+- `src/server/cache/showcase.ts` centraliza tags e revalidação.
+- Server Actions revalidam `/{handle}` e as tags quando publicação,
+  despublicação, edição de live publicada ou alteração de produtos publicados
+  afetam a vitrine.
+- Imagens de produto continuam em `<img>` com fallback, sem wildcard remoto no
+  `next.config`, para evitar abrir o otimizador de imagem a URLs arbitrárias.
+
+### Testes da fase
+
+Cobertura focada em:
+
+- derivação e filtro de categorias;
+- card público e atributos de link externo;
+- compartilhamento/Clipboard;
+- helpers de cache/revalidação;
+- query pública sem depender do Neon real.
+
+Comandos:
+
+```bash
+npm test -- --run src/components/public src/server/cache/showcase.test.ts src/server/db/queries/public-showcase.test.ts
+npm run typecheck
+npm run lint
+```
+
+---
+
 ## 9. Estrutura de pastas (sugestão)
 
 ```
