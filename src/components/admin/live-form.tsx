@@ -15,22 +15,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { slugify } from "@/lib/slug";
 import {
-  PLATFORM_OPTIONS,
   liveInputSchema,
   type LiveFormData,
   type LiveFormValues,
 } from "@/lib/validations/live";
 import { createLiveAction, updateLiveAction } from "@/server/actions/lives";
 
-const KNOWN_PLATFORMS = ["Instagram", "TikTok", "YouTube"] as const;
 
 const EMPTY_VALUES: LiveFormValues = {
   title: "",
-  subtitle: "",
-  store: "",
+  // subtitle: "",
   liveDate: "",
   liveTime: "",
-  platform: "",
   coverImageUrl: "",
   instagramUrl: "",
   slug: "",
@@ -50,14 +46,14 @@ type LiveFormProps =
       initialValues: LiveFormValues;
     };
 
-function resolvePlatformSelect(platform: string): string {
-  if (platform === "") {
-    return "";
-  }
-  return (KNOWN_PLATFORMS as readonly string[]).includes(platform)
-    ? platform
-    : "Outra";
-}
+// function resolvePlatformSelect(platform: string): string {
+//   if (platform === "") {
+//     return "";
+//   }
+//   return (KNOWN_PLATFORMS as readonly string[]).includes(platform)
+//     ? platform
+//     : "Outra";
+// }
 
 export function LiveForm({
   mode,
@@ -85,9 +81,9 @@ export function LiveForm({
 
   // On create the slug tracks the title until the creator edits it by hand.
   const [slugLocked, setSlugLocked] = useState(mode === "edit");
-  const [platformSelect, setPlatformSelect] = useState(() =>
-    resolvePlatformSelect(defaultValues.platform),
-  );
+  // const [platformSelect, setPlatformSelect] = useState(() =>
+  //   resolvePlatformSelect(defaultValues.platform),
+  // );
 
   const title = useWatch({ control, name: "title" });
   const slug = useWatch({ control, name: "slug" });
@@ -121,12 +117,12 @@ export function LiveForm({
     setSlugLocked(mode === "edit");
   }
 
-  function handlePlatformSelect(value: string) {
-    setPlatformSelect(value);
-    setValue("platform", value === "Outra" ? "" : value, {
-      shouldDirty: true,
-    });
-  }
+  // function handlePlatformSelect(value: string) {
+  //   setPlatformSelect(value);
+  //   setValue("platform", value === "Outra" ? "" : value, {
+  //     shouldDirty: true,
+  //   });
+  // }
 
   function applyResult(
     result: Awaited<ReturnType<typeof createLiveAction>>,
@@ -190,7 +186,7 @@ export function LiveForm({
         <FieldError id="title-error" message={errors.title?.message} />
       </div>
 
-      <div className="space-y-2">
+      {/* <div className="space-y-2">
         <Label htmlFor="subtitle">Subtítulo</Label>
         <Textarea
           id="subtitle"
@@ -199,10 +195,10 @@ export function LiveForm({
           {...register("subtitle")}
         />
         <FieldError id="subtitle-error" message={errors.subtitle?.message} />
-      </div>
+      </div> */}
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <Label htmlFor="store">Loja</Label>
           <Input
             id="store"
@@ -212,9 +208,9 @@ export function LiveForm({
             {...register("store")}
           />
           <FieldError id="store-error" message={errors.store?.message} />
-        </div>
+        </div> */}
 
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <Label htmlFor="platform">Plataforma</Label>
           <select
             id="platform"
@@ -237,7 +233,7 @@ export function LiveForm({
             />
           )}
           <FieldError id="platform-error" message={errors.platform?.message} />
-        </div>
+        </div> */}
 
         <div className="space-y-2">
           <Label htmlFor="liveDate">Data da live</Label>

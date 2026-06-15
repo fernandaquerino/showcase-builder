@@ -98,11 +98,11 @@ const slugSchema = z
 
 export const liveInputSchema = z.object({
   title: titleSchema,
-  subtitle: optionalText(200, "O subtítulo deve ter no máximo 200 caracteres."),
-  store: storeSchema,
+  // subtitle: optionalText(200, "O subtítulo deve ter no máximo 200 caracteres."),
+  // store: storeSchema,
   liveDate: liveDateSchema,
   liveTime: liveTimeSchema,
-  platform: optionalText(40, "A plataforma deve ter no máximo 40 caracteres."),
+  // platform: optionalText(40, "A plataforma deve ter no máximo 40 caracteres."),
   coverImageUrl: optionalUrl("Cole um link de imagem válido (http/https)."),
   instagramUrl: optionalInstagramUrl,
   slug: slugSchema,

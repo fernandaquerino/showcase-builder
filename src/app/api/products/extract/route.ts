@@ -58,6 +58,8 @@ function fieldsFoundFrom(values: {
   color: string | null;
   metadata: ExtractionCacheMetadata | null;
 }): ExtractableField[] {
+  console.log({ values });
+
   const metadata = values.metadata;
   const found = {
     name: values.name ? capitalizeFirst(values.name) : null,
@@ -84,7 +86,9 @@ function firstLookupHash(lookupHashes: string[], fallbackUrl: string): string {
   return lookupHashes[0] ?? fallbackUrl;
 }
 
-function isExtractionErrorCode(value: string | null): value is ExtractionErrorCode {
+function isExtractionErrorCode(
+  value: string | null,
+): value is ExtractionErrorCode {
   return (
     value === "INVALID_URL" ||
     value === "HOST_NOT_ALLOWED" ||
