@@ -1,0 +1,438 @@
+# Documentação Técnica — Live Showcase Builder
+
+> Plataforma estilo _page builder_ para criadoras de conteúdo montarem a vitrine de produtos da sua live e divulgarem um link público para as seguidoras.
+> Referência de resultado final: `https://pambraga-live.vercel.app/`
+
+---
+
+## 1. Visão geral
+
+### Problema
+
+Blogueiras que fazem lives divulgando produtos (ex.: live de uma loja como a C&A) hoje espalham os links dos produtos em vários lugares (stories, bio, comentários). As seguidoras se perdem. Não existe um lugar único, organizado e bonito que reúna **todos os produtos daquela live com nome, foto, tamanho/cor e link de compra**.
+
+### Solução
+
+Um admin simples (estilo WordPress / page builder enxuto) onde a criadora:
+
+1. Cria uma "live" (título, data, horário, loja).
+2. Cola os links dos produtos — o sistema busca **nome e imagem automaticamente**.
+3. Completa categoria, tamanho e cor, reordena os produtos.
+4. Publica.
+
+O resultado é uma página pública, mobile-first, hospedada em URL própria (Vercel), que a criadora compartilha com as seguidoras.
+
+### Público-alvo
+
+- **Criadoras** (usuárias do admin): não-técnicas. UX precisa ser à prova de fricção.
+- **Seguidoras** (consumidoras da página pública): majoritariamente mobile, vindas de Instagram/WhatsApp. Performance e clareza são prioridade.
+
+---
+
+## 2. Escopo / Funcionalidades
+
+### MVP (v1)
+
+**Autenticação**
+
+- Cadastro com e-mail e senha **ou** Google.
+- Login com e-mail e senha.
+
+**Gestão de lives**
+
+- Criar nova live.
+- Editar título, data, horário e loja.
+- Publicar / despublicar uma live.
+
+**Produtos**
+
+- Colar link do produto → sistema busca nome e foto automaticamente.
+- Cadastrar/editar: nome, categoria, tamanho, cor, imagem e link.
+- Reordenar produtos (drag-and-drop).
+- Remover produto.
+
+**Página pública**
+
+- Mostra automaticamente a live publicada.
+- Filtro de categorias gerado dinamicamente a partir dos produtos.
+- Grid de produtos mobile-first.
+- Compartilhamento (WhatsApp / copiar link).
+
+### Fora do MVP (backlog / v2+)
+
+- Métricas de cliques por produto (analytics).
+- Temas / personalização visual da página pública.
+- Múltiplas lives publicadas simultaneamente por criadora.
+- Domínio customizado por criadora.
+- Suporte a outras lojas além da C&A (extração genérica de metadados).
+- Integração oficial de afiliado (se/quando houver API).
+
+---
+
+## 3. Arquitetura
+
+Aplicação **full-stack monolítica em Next.js** (App Router), com três superfícies bem separadas dentro do mesmo projeto:
+
+```
+┌───────────────────────────────────────────────────────────┐
+│                     Next.js (App Router)                   │
+│                                                            │
+│  ┌──────────────┐   ┌──────────────┐   ┌────────────────┐  │
+│  │   /admin     │   │  /(public)   │   │  /api  + RSC   │  │
+│  │  (privado)   │   │   página     │   │  Server Actions│  │
+│  │  page builder│   │   da live    │   │  extração link │  │
+│  └──────┬───────┘   └──────┬───────┘   └───────┬────────┘  │
+│         │                  │                   │           │
+└─────────┼──────────────────┼───────────────────┼───────────┘
+          │                  │                   │
+          ▼                  ▼                   ▼
+   ┌─────────────┐    ┌─────────────┐    ┌──────────────────┐
+   │  Auth.js    │    │  Cache/ISR  │    │  Catálogo C&A     │
+   │  (sessão)   │    │ revalidate  │    │ (HTML → metadata) │
+   └─────────────┘    └─────────────┘    └──────────────────┘
+          │
+          ▼
+   ┌──────────────────────┐
+   │  PostgreSQL (Drizzle) │
+   │  users / lives /      │
+   │  products             │
+   └──────────────────────┘
+```
+
+### Decisões-chave
+
+- **Admin** (`/admin/*`): rotas autenticadas, renderização dinâmica. É o page builder.
+- **Página pública** (`/[handle]`): renderização estática com **ISR / revalidação on-demand**. Quando a criadora publica/edita, dispara `revalidatePath`/`revalidateTag` para regenerar. Isso entrega TTFB baixíssimo e bom SEO sem manter a página "viva" no servidor a cada request.
+- **Extração de link**: roda **sempre no servidor** (Server Action ou Route Handler), nunca no cliente — evita CORS e mantém a lógica de parsing fora do bundle.
+
+---
+
+## 4. Stack tecnológica
+
+| Camada          | Tecnologia                                                                    | Por quê                                                                                 |
+| --------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Framework       | **Next.js 15+ (App Router, RSC)**                                             | SSG/ISR para a página pública + rotas de API no mesmo projeto; deploy nativo na Vercel. |
+| Linguagem       | **TypeScript** (strict)                                                       | Segurança de tipos ponta a ponta, schema → UI.                                          |
+| UI              | **Tailwind CSS + shadcn/ui**                                                  | Mobile-first por padrão; componentes acessíveis e customizáveis sem lock-in.            |
+| Drag-and-drop   | **dnd-kit**                                                                   | Reordenação de produtos performática e acessível (teclado + touch).                     |
+| Auth            | **Auth.js (NextAuth v5)**                                                     | Credentials (e-mail/senha) + Google provider; sessão via JWT/cookie.                    |
+| Hash de senha   | **bcrypt** ou **argon2**                                                      | Nunca armazenar senha em texto.                                                         |
+| ORM             | **Drizzle ORM**                                                               | Tipado, leve, migrations versionadas, ótimo DX com Postgres.                            |
+| Banco           | **PostgreSQL** (Neon / Vercel Postgres / Supabase)                            | Relacional, serverless-friendly.                                                        |
+| Validação       | **Zod**                                                                       | Validação de formulários e payloads de API; infere tipos.                               |
+| Forms           | **React Hook Form + Zod**                                                     | Performance e validação declarativa no admin.                                           |
+| Parsing HTML    | **cheerio** (+ leitura de JSON-LD)                                            | Extrair `og:*` e `schema.org/Product` do HTML da C&A.                                   |
+| Imagens         | **next/image** + `remotePatterns`                                             | Otimização e lazy-loading; opção de re-hospedar (ver §7).                               |
+| Estado servidor | **RSC + Server Actions** (ou TanStack Query se precisar de client-state rico) | Menos client JS na página pública.                                                      |
+| Deploy          | **Vercel**                                                                    | ISR, edge, integração com Postgres serverless.                                          |
+
+> Observação de versões: usar sempre a versão **estável mais recente** de Next.js e Auth.js no momento da implementação. A arquitetura acima vale para App Router + React Server Components independente do número exato da minor.
+
+---
+
+## 5. Modelo de dados
+
+```
+User ──< Live ──< Product
+```
+
+### `users`
+
+| Campo         | Tipo          | Notas                                       |
+| ------------- | ------------- | ------------------------------------------- |
+| id            | uuid (pk)     |                                             |
+| email         | text (unique) |                                             |
+| name          | text          |                                             |
+| handle        | text (unique) | slug público, ex.: `pambraga` → `/pambraga` |
+| avatar_url    | text?         |                                             |
+| password_hash | text?         | nulo quando login só por Google             |
+| created_at    | timestamptz   |                                             |
+
+### `lives`
+
+| Campo                   | Tipo                      | Notas                                       |
+| ----------------------- | ------------------------- | ------------------------------------------- |
+| id                      | uuid (pk)                 |                                             |
+| user_id                 | uuid (fk → users)         |                                             |
+| title                   | text                      | ex.: "Live C&A · Pam Braga"                 |
+| subtitle                | text?                     | ex.: "Peças Mindset que eu escolhi para vc" |
+| store                   | text                      | loja, ex.: "C&A"                            |
+| live_date               | date                      | data da live                                |
+| live_time               | text?                     | horário, ex.: "20h"                         |
+| platform                | text?                     | ex.: "Instagram"                            |
+| slug                    | text                      | único por usuário; compõe a URL pública     |
+| status                  | enum('draft','published') | default `draft`                             |
+| published_at            | timestamptz?              |                                             |
+| created_at / updated_at | timestamptz               |                                             |
+
+> Constraint sugerida: índice único `(user_id, slug)`. Regra de negócio do MVP: **apenas uma live publicada por usuário por vez** (publicar uma despublica a anterior), já que a página pública mostra "a live publicada".
+
+### `products`
+
+| Campo       | Tipo              | Notas                                                              |
+| ----------- | ----------------- | ------------------------------------------------------------------ |
+| id          | uuid (pk)         |                                                                    |
+| live_id     | uuid (fk → lives) |                                                                    |
+| name        | text              |                                                                    |
+| category    | text              | livre; filtros públicos são gerados a partir dos valores distintos |
+| size        | text?             | tamanho (P/M/G ou numérico)                                        |
+| color       | text?             | cor                                                                |
+| image_url   | text              | extraída do link ou enviada manualmente                            |
+| product_url | text              | link de afiliado da C&A                                            |
+| price       | numeric?          | opcional (se conseguir extrair)                                    |
+| position    | integer           | ordem na vitrine (reordenação)                                     |
+| source_url  | text?             | URL original colada, antes de resolver redirect                    |
+| created_at  | timestamptz       |                                                                    |
+
+**Sobre categorias:** não há tabela de categorias no MVP. A categoria é um campo livre por produto, e os filtros da página pública (`Tudo`, `Jaquetas`, `Blusas`, `Calças`...) são derivados em runtime dos valores distintos de `category` daquela live. Simples e flexível.
+
+**Sobre reordenação:** usar `position` (inteiro). Ao arrastar, recalcular as posições afetadas. Alternativa para evitar reescrever todas as linhas: posições fracionárias (ex.: 1000, 2000, 3000 e inserir no "meio" com 1500). Para um MVP, reindexar tudo na ordem está ótimo.
+
+---
+
+## 6. Fluxos principais
+
+### 6.1 Cadastro / Login
+
+- **E-mail + senha:** valida com Zod → `bcrypt.hash` → cria `user`. Login compara hash.
+- **Google:** provider do Auth.js. No primeiro login, cria `user` com `password_hash = null` e gera um `handle` sugerido a partir do nome (editável depois).
+- **Account linking:** se o e-mail do Google já existir como conta de senha, decidir política (vincular automaticamente vs. exigir login por senha primeiro). Para o MVP, manter simples e documentar.
+
+### 6.2 Criar e editar live
+
+1. Criadora clica em "Nova live".
+2. Preenche título, loja, data, horário (form com React Hook Form + Zod).
+3. `slug` gerado automaticamente a partir do título (com opção de editar).
+4. Salva como `draft`.
+
+### 6.3 Colar link do produto (o coração do produto) ⭐
+
+Ver §7 — esse fluxo merece seção própria.
+
+### 6.4 Reordenar produtos
+
+- Lista de produtos com `dnd-kit`. Ao soltar, dispara Server Action que persiste as novas `position`.
+
+### 6.5 Publicar / despublicar
+
+- Publicar: seta `status='published'`, `published_at=now()`, despublica outras lives do usuário (regra do MVP), e dispara `revalidatePath('/[handle]')` para regenerar a página pública.
+- Despublicar: `status='draft'` + revalidação (página pública passa a mostrar estado vazio ou 404, ver §8).
+
+### 6.6 Página pública
+
+- `GET /[handle]` resolve o usuário pelo handle, busca a live publicada e seus produtos ordenados por `position`.
+- Renderização estática (ISR), revalidada on-demand na publicação.
+
+---
+
+## 7. Recurso "colar link" — extração de dados do produto (C&A)
+
+> **Esta é a parte de maior risco técnico do projeto. Leia com atenção antes de implementar.**
+
+### O problema real
+
+A C&A **não expõe uma API pública oficial de catálogo** para terceiros. Os links que a criadora cola são **links de afiliado** (`minhacea.cea.com.br/?lcea=CÓDIGO`) que **redirecionam** para a página do produto na plataforma de social selling. Portanto, "buscar pela API da C&A" significa, na prática, **extrair metadados do HTML da página de destino**.
+
+### Estratégia (do mais leve para o mais pesado)
+
+**Etapa 1 — Resolver o redirect (server-side)**
+
+```
+POST /api/products/extract  { url }
+→ fetch(url, { redirect: 'follow' })  // segue o redirect do link de afiliado
+→ guarda a URL final (página real do produto)
+```
+
+**Etapa 2 — Parsear o HTML**
+Na resposta HTML, tentar nesta ordem:
+
+1. **JSON-LD** (`<script type="application/ld+json">`) com `@type: "Product"` → `name`, `image`, `offers.price`, `color`. É a fonte mais rica e estável quando existe.
+2. **Open Graph** (`og:title`, `og:image`, `product:price:amount`) como fallback.
+3. **Meta básicos** (`<title>`, primeira `<img>` relevante) como último recurso.
+
+```ts
+// pseudo-implementação
+const html = await (await fetch(finalUrl)).text();
+const $ = cheerio.load(html);
+
+const jsonLd = parseJsonLd($); // procura @type Product
+const og = parseOpenGraph($);
+
+return {
+  name: jsonLd?.name ?? og?.title ?? null,
+  imageUrl: jsonLd?.image ?? og?.image ?? null,
+  price: jsonLd?.price ?? og?.price ?? null,
+  color: jsonLd?.color ?? null,
+  finalUrl,
+};
+```
+
+**Etapa 3 (contingência) — Headless browser**
+Se a C&A renderizar os dados via JavaScript (SPA), o `fetch` simples retorna HTML vazio de conteúdo. Nesse caso, seria necessário um headless browser (Playwright / `@sparticuz/chromium` para rodar serverless na Vercel). **Isso é pesado, mais lento e mais caro.** Tratar como contingência, não como caminho principal.
+
+### Fallback manual é OBRIGATÓRIO
+
+Independente de a extração funcionar, a UI deve:
+
+- Pré-preencher nome e imagem quando conseguir.
+- **Sempre** permitir editar tudo manualmente e fazer upload de imagem própria.
+- Nunca travar o cadastro se a extração falhar.
+
+Isso protege o produto contra mudanças no site da C&A e contra produtos que não retornam metadados.
+
+### Tratamento de imagem
+
+- **Opção A (recomendada p/ MVP):** usar a URL da imagem da C&A direto via `next/image` com `remotePatterns` apontando para os domínios de imagem da C&A. Simples.
+- **Risco:** hotlink protection ou imagens que expiram. Se acontecer, ir para Opção B.
+- **Opção B:** baixar a imagem e re-hospedar em **Vercel Blob** ou **Cloudinary** no momento do cadastro. Mais robusto, custa storage.
+
+### Cache
+
+Cachear o resultado da extração por URL (em tabela ou KV) para não refazer o request a cada edição.
+
+### Cuidados legais/éticos
+
+Extração de metadados de páginas públicas é comum, mas vale: respeitar `robots.txt`, não sobrecarregar o servidor da C&A (rate limit do seu lado), e revisar os termos de uso do programa de afiliados. Documentar essa decisão.
+
+---
+
+## 8. Página pública (mobile-first)
+
+### Estrutura (espelhando a referência)
+
+1. **Header da live**: título, data · horário · loja, status ("Ao vivo no Instagram").
+2. **Vitrine**: subtítulo + contador ("18 de 18").
+3. **Barra de filtros de categoria** (sticky no topo ao rolar): `Tudo` + categorias distintas.
+4. **Grid de produtos**: card com imagem, badge de categoria, índice, nome, tamanho, cor e CTA "VER NA C&A →" (abre o link de afiliado em nova aba).
+5. **Bloco "marca uma amiga"**: compartilhar no WhatsApp (`https://wa.me/?text=...`) + copiar link (Clipboard API).
+6. **Footer**: handle da criadora, info da campanha.
+
+### Mobile-first / performance
+
+- Tailwind já é mobile-first: estilizar para a menor largura primeiro, escalar com `sm:`/`md:`.
+- Grid de 2 colunas no mobile, 3–4 no desktop.
+- `next/image` com `loading="lazy"`, `sizes` corretos e `priority` só na primeira dobra.
+- Página estática (ISR) → quase zero JS além do filtro de categorias (que pode ser client component isolado).
+- Lighthouse como meta: performance e acessibilidade altos (público mobile com conexão variável).
+
+### SEO / compartilhamento
+
+- `generateMetadata` por live: `title`, `description`, **Open Graph** (`og:title`, `og:image`, `og:description`) para o preview bonito no Instagram/WhatsApp.
+- A `og:image` pode ser a capa da live ou gerada dinamicamente (Next.js OG Image / `@vercel/og`).
+
+### Estados
+
+- Handle inexistente → `404`.
+- Handle existe mas sem live publicada → página "em breve" amigável (não 404 cru).
+
+---
+
+## 9. Estrutura de pastas (sugestão)
+
+```
+src/
+├── app/
+│   ├── (public)/
+│   │   └── [handle]/
+│   │       ├── page.tsx          # página pública da live (ISR)
+│   │       └── not-found.tsx
+│   ├── admin/
+│   │   ├── layout.tsx            # guard de autenticação
+│   │   ├── page.tsx              # lista de lives
+│   │   └── lives/
+│   │       └── [liveId]/
+│   │           └── page.tsx      # editor da live (page builder)
+│   ├── (auth)/
+│   │   ├── login/page.tsx
+│   │   └── signup/page.tsx
+│   └── api/
+│       ├── auth/[...nextauth]/route.ts
+│       └── products/extract/route.ts   # extração de metadados do link
+├── components/
+│   ├── ui/                       # shadcn/ui
+│   ├── admin/                    # builder, ProductForm, SortableList...
+│   └── public/                   # ProductCard, CategoryFilter, ShareBar...
+├── server/
+│   ├── actions/                  # Server Actions (lives, products)
+│   ├── db/                       # drizzle schema + client
+│   └── lib/extract/              # parser JSON-LD / OG / cheerio
+├── lib/
+│   ├── auth.ts                   # config Auth.js
+│   ├── validations/              # schemas Zod
+│   └── utils.ts
+└── middleware.ts                 # protege /admin
+```
+
+---
+
+## 10. Segurança e qualidade
+
+- **Autorização**: toda Server Action que mexe em `lives`/`products` valida que o recurso pertence ao usuário da sessão. Nunca confiar em IDs vindos do cliente sem checar `user_id`.
+- **Middleware**: protege `/admin/*`; redireciona não autenticados para login.
+- **Validação**: Zod em toda entrada (forms e API). Sanitizar texto exibido na página pública.
+- **Senhas**: bcrypt/argon2, nunca logar, nunca retornar hash.
+- **SSRF na extração de link**: a rota `extract` faz `fetch` de URL fornecida pelo usuário → validar que é http(s), bloquear IPs internos/localhost, timeout e limite de tamanho de resposta. **Importante.**
+- **Rate limiting** na rota de extração.
+- **Variáveis de ambiente** (`.env`): `DATABASE_URL`, `AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `NEXTAUTH_URL`, (opcional) `BLOB_READ_WRITE_TOKEN`.
+
+---
+
+## 11. Roadmap de implementação (fases para o Claude Code)
+
+Sugestão de ordem para construir incrementalmente, cada fase entregável e testável:
+
+**Fase 0 — Setup**
+
+- Next.js + TS + Tailwind + shadcn/ui.
+- Drizzle + Postgres, schema inicial e primeira migration.
+- Auth.js (Credentials + Google), telas de login/cadastro, middleware.
+
+**Fase 1 — CRUD de lives**
+
+- Listar, criar, editar (título, data, horário, loja), gerar slug.
+- Publicar/despublicar (sem extração ainda).
+
+**Fase 2 — Produtos (manual primeiro)**
+
+- Adicionar/editar/remover produto com todos os campos preenchidos à mão.
+- Reordenação com dnd-kit.
+
+**Fase 3 — Extração de link** ⭐
+
+- Rota `extract`: resolver redirect + JSON-LD/OG via cheerio.
+- Integrar no ProductForm (pré-preenche, com fallback manual).
+- Cache + tratamento de erro + proteções de SSRF.
+
+**Fase 4 — Página pública**
+
+- Layout mobile-first espelhando a referência.
+- Filtro de categorias, grid, share bar.
+- ISR + revalidação on-demand na publicação.
+- `generateMetadata` + OG image.
+
+**Fase 5 — Polimento**
+
+- Estados vazios, 404, loading, validações, acessibilidade.
+- Lighthouse / responsividade fina.
+
+---
+
+## 12. Riscos e premissas
+
+| Risco                                             | Impacto                        | Mitigação                                                  |
+| ------------------------------------------------- | ------------------------------ | ---------------------------------------------------------- |
+| C&A muda markup / não tem JSON-LD                 | Extração quebra                | Fallback manual obrigatório; cobrir JSON-LD + OG + meta.   |
+| Página da C&A é JS-rendered                       | `fetch` simples não pega dados | Contingência com headless browser (Playwright serverless). |
+| Imagens da C&A com hotlink protection / expiração | Fotos quebram na vitrine       | Re-hospedar em Blob/Cloudinary no cadastro.                |
+| Termos de uso do afiliado                         | Legal                          | Revisar termos; respeitar robots.txt e rate limit.         |
+| SSRF na rota de extração                          | Segurança                      | Validar URL, bloquear rede interna, timeout.               |
+
+**Premissas do MVP:**
+
+- Uma live publicada por criadora por vez.
+- Foco exclusivo em C&A na v1 (extração genérica fica para v2).
+- Página pública é somente leitura, estática/ISR.
+
+---
+
+_Documento vivo — ajustar conforme decisões de implementação no Claude Code._
