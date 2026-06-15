@@ -234,11 +234,11 @@ export async function PublicShowcasePageContent({
                   {showcase.live.subtitle}
                 </p>
               )}
-              {showcase.live?.platform && (
+              {/* {showcase.live?.platform && (
                 <Badge variant="secondary" className="mt-4">
                   Produtos da live no {showcase.live.platform}
                 </Badge>
-              )}
+              )} */}
               {showcase.live?.instagramUrl && (
                 <Button asChild variant="outline" className="mt-5">
                   <Link
