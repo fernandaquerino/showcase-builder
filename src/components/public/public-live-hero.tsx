@@ -65,7 +65,7 @@ export function PublicLiveHero({
   const hasCover = Boolean(live?.coverImageUrl) && theme.heroStyle !== "clean";
 
   return (
-    <header className="relative isolate overflow-hidden rounded-b-[2rem] bg-[var(--live-primary)] text-[var(--live-primary-foreground)] shadow-sm sm:rounded-[2rem]">
+    <header className="relative isolate overflow-hidden bg-[var(--live-primary)] text-[var(--live-primary-foreground)] shadow-sm">
       {hasCover ? (
         <>
           {/* Remote creator-provided image URL; keep native img to avoid an unrestricted next/image proxy. */}
@@ -80,7 +80,7 @@ export function PublicLiveHero({
       ) : (
         <>
           <div className="absolute inset-0 -z-20 bg-[linear-gradient(135deg,var(--live-primary)_0%,var(--live-background)_100%)]" />
-          <div className="absolute right-6 top-10 -z-10 size-28 rounded-full border border-white/10 bg-white/10 blur-sm sm:size-44" />
+          <div className="absolute right-6 top-10 -z-10 size-28 border border-white/10 bg-white/10 blur-sm sm:size-44" />
         </>
       )}
 
