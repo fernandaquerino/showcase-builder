@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatLiveDate, formatLiveTime } from "@/lib/format";
 import { normalizeHandle } from "@/lib/handle";
+import { buildPublicUrl } from "@/lib/public-url";
 import { slugify } from "@/lib/slug";
 import {
   getCachedPublishedShowcaseByHandle,
@@ -28,11 +29,7 @@ export type PublicShowcaseRouteParams = {
 };
 
 function publicUrl(handle: string, slug?: string): string {
-  const base =
-    process.env.NEXTAUTH_URL ??
-    process.env.AUTH_URL ??
-    "http://localhost:3000";
-  return new URL(slug ? `/${handle}/${slug}` : `/${handle}`, base).href;
+  return buildPublicUrl(slug ? `/${handle}/${slug}` : `/${handle}`);
 }
 
 function initials(name: string): string {

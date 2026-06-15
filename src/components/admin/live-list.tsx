@@ -7,15 +7,11 @@ import { PublishControl } from "@/components/admin/publish-control";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatLiveDate, formatLiveTime, formatTimestamp } from "@/lib/format";
+import { buildPublicUrl } from "@/lib/public-url";
 import type { Live } from "@/server/db/queries/lives";
 
 function getPublicLiveUrl(handle: string, slug: string): string {
-  const base =
-    process.env.NEXTAUTH_URL ??
-    process.env.AUTH_URL ??
-    "http://localhost:3000";
-
-  return new URL(`/${handle}/${slug}`, base).href;
+  return buildPublicUrl(`/${handle}/${slug}`);
 }
 
 function LiveListItem({ handle, live }: { handle: string; live: Live }) {

@@ -39,9 +39,11 @@ npx auth secret
 
 `DATABASE_URL` e `AUTH_SECRET` são obrigatórias. `AUTH_URL` deve apontar para a
 URL pública da aplicação em produção, pois também é usada nos links de
-compartilhamento. As variáveis do Google devem ser preenchidas juntas; quando
-ambas estiverem vazias, login e cadastro por e-mail continuam funcionando e o
-botão do Google não é exibido.
+compartilhamento e callbacks de autenticação. Na Vercel, sem `AUTH_URL`, o app
+tenta usar as URLs automáticas do deploy, mas configurar `AUTH_URL` continua
+sendo o caminho mais estável. As variáveis do Google devem ser preenchidas
+juntas; quando ambas estiverem vazias, login e cadastro por e-mail continuam
+funcionando e o botão do Google não é exibido.
 
 ### Google OAuth
 

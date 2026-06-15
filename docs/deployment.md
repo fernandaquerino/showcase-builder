@@ -4,6 +4,7 @@
 
 - Set `DATABASE_URL`, `AUTH_SECRET` and `AUTH_URL`.
 - Set `AUTH_URL` to the production origin, for example `https://your-app.vercel.app`.
+- Without `AUTH_URL`, public links fall back to Vercel's automatic deployment URL when available; setting `AUTH_URL` is still recommended for stable share links and Auth.js callbacks.
 - Configure `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` together, or leave both empty.
 - Configure `PRODUCT_EXTRACTION_ALLOWED_HOSTS` with exact verified hosts only.
 - Keep product extraction timeout, redirect and byte limits conservative.
