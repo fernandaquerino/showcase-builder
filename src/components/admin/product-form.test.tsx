@@ -37,11 +37,11 @@ function extractionData(overrides: Record<string, unknown> = {}) {
     canonicalUrl: "https://loja.com/produto?p=1",
     finalUrl: "https://loja.com/produto?p=1",
     sku: "SKU-1",
-    name: "Nome extraído",
+    name: "nome extraído",
     imageUrl: "https://a/x.jpg",
     price: "199.90",
     color: "Verde",
-    category: "Jaquetas",
+    category: "moda feminina-jaquetas",
     brand: "Mindset",
     availableSizes: ["PP", "P", "M", "G"],
     fieldsFound: [
@@ -91,7 +91,7 @@ describe("ProductForm", () => {
     );
 
     expect(
-      screen.getByLabelText("Cole seu link de afiliado"),
+      screen.getByLabelText("Cole o link do produto"),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText("Nome do produto")).not.toBeInTheDocument();
 
@@ -125,7 +125,7 @@ describe("ProductForm", () => {
       <ProductForm mode="create" liveId="live-1" categorySuggestions={[]} />,
     );
 
-    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+    fireEvent.change(screen.getByLabelText("Cole o link do produto"), {
       target: { value: affiliateUrl },
     });
     fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));
@@ -133,7 +133,7 @@ describe("ProductForm", () => {
     expect(await screen.findByLabelText("Nome do produto")).toHaveValue(
       "Nome extraído",
     );
-    expect(screen.getByLabelText("Categoria")).toHaveValue("Jaquetas");
+    expect(screen.getByLabelText("Categoria")).toHaveValue("Moda");
     expect(screen.getByLabelText("Link para comprar")).toHaveValue(
       affiliateUrl,
     );
@@ -147,7 +147,7 @@ describe("ProductForm", () => {
       <ProductForm mode="create" liveId="live-1" categorySuggestions={[]} />,
     );
 
-    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+    fireEvent.change(screen.getByLabelText("Cole o link do produto"), {
       target: { value: affiliateUrl },
     });
     fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));
@@ -170,7 +170,7 @@ describe("ProductForm", () => {
     fireEvent.change(screen.getByLabelText("Categoria"), {
       target: { value: "Minha categoria" },
     });
-    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+    fireEvent.change(screen.getByLabelText("Cole o link do produto"), {
       target: { value: affiliateUrl },
     });
     fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));
@@ -197,7 +197,7 @@ describe("ProductForm", () => {
       <ProductForm mode="create" liveId="live-1" categorySuggestions={[]} />,
     );
 
-    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+    fireEvent.change(screen.getByLabelText("Cole o link do produto"), {
       target: { value: affiliateUrl },
     });
     fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));
@@ -216,7 +216,7 @@ describe("ProductForm", () => {
     render(
       <ProductForm mode="create" liveId="live-1" categorySuggestions={[]} />,
     );
-    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+    fireEvent.change(screen.getByLabelText("Cole o link do produto"), {
       target: { value: affiliateUrl },
     });
     revealManualForm();

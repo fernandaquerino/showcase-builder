@@ -25,7 +25,7 @@ export default async function HomePage() {
         </Link>
         <Button asChild variant="ghost">
           <Link href={session ? "/admin" : "/login"}>
-            {session ? "Ir para o admin" : "Entrar"}
+            {session ? "Ir para o painel" : "Entrar"}
           </Link>
         </Button>
       </header>
@@ -72,9 +72,10 @@ export default async function HomePage() {
             ))}
           </ul>
           <div className="mt-8 rounded-2xl bg-muted p-5">
-            <p className="font-medium">A fundação está pronta.</p>
+            <p className="font-medium">Seu link fica pronto para compartilhar.</p>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              A criação e publicação de lives chega na próxima fase.
+              Crie uma live, adicione os produtos e publique uma página bonita
+              para suas seguidoras.
             </p>
           </div>
         </div>

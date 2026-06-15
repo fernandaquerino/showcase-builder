@@ -17,9 +17,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatBrlPrice, parseBrlPrice } from "@/lib/price";
+import { capitalizeFirst } from "@/lib/string";
 import { isSafeHttpUrl } from "@/lib/url";
 import type { ExtractionSuccessData } from "@/lib/validations/extract";
 import {
+  normalizeProductCategory,
   productInputSchema,
   type ProductFormData,
   type ProductFormValues,
@@ -45,14 +47,14 @@ const EXTRACTION_TARGETS: ReadonlyArray<{
   field: "name" | "imageUrl" | "price" | "color" | "category";
   pick: (data: ExtractionSuccessData) => string | null;
 }> = [
-  { field: "name", pick: (data) => data.name },
+  { field: "name", pick: (data) => (data.name ? capitalizeFirst(data.name) : null) },
   { field: "imageUrl", pick: (data) => data.imageUrl },
   {
     field: "price",
     pick: (data) => (data.price ? data.price.replace(".", ",") : null),
   },
   { field: "color", pick: (data) => data.color },
-  { field: "category", pick: (data) => data.category },
+  { field: "category", pick: (data) => normalizeProductCategory(data.category) },
 ];
 
 type ProductFormProps = {
@@ -166,7 +168,11 @@ export function ProductForm({
     setError("root", { message: result.message });
     for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
       if (field in productInputSchema.shape && messages?.[0]) {
-        setError(field as keyof ProductFormValues, { message: messages[0] });
+        setError(
+          field as keyof ProductFormValues,
+          { message: messages[0] },
+          { shouldFocus: true },
+        );
       }
     }
     return false;

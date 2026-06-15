@@ -136,7 +136,11 @@ export function LiveForm({
     setError("root", { message: result.message });
     for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
       if (field in liveInputSchema.shape && messages?.[0]) {
-        setError(field as keyof LiveFormValues, { message: messages[0] });
+        setError(
+          field as keyof LiveFormValues,
+          { message: messages[0] },
+          { shouldFocus: true },
+        );
       }
     }
     return false;
@@ -260,7 +264,7 @@ export function LiveForm({
 
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <Label htmlFor="slug">Endereço da live</Label>
+          <Label htmlFor="slug">Endereço da página</Label>
           <Button
             type="button"
             variant="ghost"
@@ -280,7 +284,7 @@ export function LiveForm({
           })}
         />
         <p id="slug-preview" className="text-sm text-muted-foreground">
-          Endereço público futuro:{" "}
+          Link público depois de publicar:{" "}
           <span className="font-medium text-foreground">
             /{handle}/{slugPreview}
           </span>

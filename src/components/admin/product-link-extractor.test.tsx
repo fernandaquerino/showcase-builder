@@ -64,7 +64,7 @@ describe("ProductLinkExtractor", () => {
     render(<ProductLinkExtractor {...baseProps} />);
 
     expect(
-      screen.getByLabelText("Cole seu link de afiliado"),
+      screen.getByLabelText("Cole o link do produto"),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Buscar produto" }),
@@ -99,7 +99,7 @@ describe("ProductLinkExtractor", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+    fireEvent.change(screen.getByLabelText("Cole o link do produto"), {
       target: { value: successData().affiliateUrl },
     });
     fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));
@@ -121,7 +121,7 @@ describe("ProductLinkExtractor", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+    fireEvent.change(screen.getByLabelText("Cole o link do produto"), {
       target: { value: successData().affiliateUrl },
     });
     fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));
@@ -142,7 +142,7 @@ describe("ProductLinkExtractor", () => {
     const onRevealForm = vi.fn();
     render(<ProductLinkExtractor {...baseProps} onRevealForm={onRevealForm} />);
 
-    fireEvent.change(screen.getByLabelText("Cole seu link de afiliado"), {
+    fireEvent.change(screen.getByLabelText("Cole o link do produto"), {
       target: { value: successData().affiliateUrl },
     });
     fireEvent.click(screen.getByRole("button", { name: "Buscar produto" }));

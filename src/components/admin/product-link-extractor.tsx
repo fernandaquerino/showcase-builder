@@ -89,13 +89,13 @@ export function ProductLinkExtractor({
           Adicione um produto
         </h2>
         <p className="text-sm text-muted-foreground">
-          Cole seu link de afiliado. Vamos tentar encontrar o nome, a foto e o
+          Cole o link do produto. Vamos tentar encontrar o nome, a foto e o
           preço para você.
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={inputId}>Cole seu link de afiliado</Label>
+        <Label htmlFor={inputId}>Cole o link do produto</Label>
         <Input
           id={inputId}
           type="url"

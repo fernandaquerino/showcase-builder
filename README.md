@@ -26,6 +26,7 @@ Preencha as variáveis server-side:
 ```env
 DATABASE_URL=""
 AUTH_SECRET=""
+AUTH_URL="http://localhost:3000"
 AUTH_GOOGLE_ID=""
 AUTH_GOOGLE_SECRET=""
 ```
@@ -36,9 +37,11 @@ Gere um segredo para o Auth.js com:
 npx auth secret
 ```
 
-`DATABASE_URL` e `AUTH_SECRET` são obrigatórias. As variáveis do Google devem
-ser preenchidas juntas; quando ambas estiverem vazias, login e cadastro por
-e-mail continuam funcionando e o botão do Google não é exibido.
+`DATABASE_URL` e `AUTH_SECRET` são obrigatórias. `AUTH_URL` deve apontar para a
+URL pública da aplicação em produção, pois também é usada nos links de
+compartilhamento. As variáveis do Google devem ser preenchidas juntas; quando
+ambas estiverem vazias, login e cadastro por e-mail continuam funcionando e o
+botão do Google não é exibido.
 
 ### Google OAuth
 
@@ -86,7 +89,7 @@ src/
 └── types/                # ampliações de tipos do Auth.js
 ```
 
-O admin em `/admin` possui proteção no `src/proxy.ts` e nova verificação
+O painel em `/admin` possui proteção no `src/proxy.ts` e nova verificação
 server-side em seu layout.
 
 ---

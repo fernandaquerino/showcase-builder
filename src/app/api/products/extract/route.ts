@@ -35,6 +35,8 @@ import {
 } from "@/server/lib/extract/policy";
 import { fetchHtmlWithSafeRedirects } from "@/server/lib/extract/safe-fetch";
 import { validateUrl as validateRequestUrl } from "@/server/lib/extract/url-guard";
+import { capitalizeFirst } from "@/lib/string";
+import { normalizeProductCategory } from "@/lib/validations/product";
 
 // `node:dns` and `node:crypto` require the Node.js runtime (not Edge).
 export const runtime = "nodejs";
@@ -58,11 +60,11 @@ function fieldsFoundFrom(values: {
 }): ExtractableField[] {
   const metadata = values.metadata;
   const found = {
-    name: values.name,
+    name: values.name ? capitalizeFirst(values.name) : null,
     imageUrl: values.imageUrl,
     price: values.price,
     color: values.color,
-    category: metadata?.category ?? null,
+    category: normalizeProductCategory(metadata?.category),
     brand: metadata?.brand ?? null,
     sku: metadata?.sku ?? null,
     availableSizes: metadata?.availableSizes.length
@@ -76,6 +78,26 @@ function successResponse(
   data: ExtractionSuccessData,
 ): NextResponse<ExtractionResponse> {
   return NextResponse.json({ success: true, data }, { status: 200 });
+}
+
+function firstLookupHash(lookupHashes: string[], fallbackUrl: string): string {
+  return lookupHashes[0] ?? fallbackUrl;
+}
+
+function isExtractionErrorCode(value: string | null): value is ExtractionErrorCode {
+  return (
+    value === "INVALID_URL" ||
+    value === "HOST_NOT_ALLOWED" ||
+    value === "RATE_LIMITED" ||
+    value === "TIMEOUT" ||
+    value === "TOO_MANY_REDIRECTS" ||
+    value === "UNSUPPORTED_CONTENT" ||
+    value === "RESPONSE_TOO_LARGE" ||
+    value === "UPSTREAM_BLOCKED" ||
+    value === "NOT_FOUND" ||
+    value === "NO_PRODUCT_DATA" ||
+    value === "EXTRACTION_FAILED"
+  );
 }
 
 function cacheMetadata(value: unknown): ExtractionCacheMetadata {
@@ -115,8 +137,9 @@ function cacheToResponse(
   affiliateUrl: string,
 ): NextResponse<ExtractionResponse> {
   if (cached.status === "error") {
-    const code = (cached.errorCode ??
-      "EXTRACTION_FAILED") as ExtractionErrorCode;
+    const code = isExtractionErrorCode(cached.errorCode)
+      ? cached.errorCode
+      : "EXTRACTION_FAILED";
     return jsonError(code);
   }
 
@@ -231,7 +254,7 @@ export async function POST(
     await cacheNetworkError(
       fetched.code,
       affiliateUrl,
-      initialHashes[0] ?? initialHashes[1],
+      firstLookupHash(initialHashes, affiliateUrl),
     );
     logExtractionEvent(
       fetched.code === "TIMEOUT" ? "timeout" : "upstream_error",
@@ -248,7 +271,7 @@ export async function POST(
 
   if (normalized.completeness === null) {
     await upsertExtractionCache({
-      urlHash: initialHashes[0] ?? initialHashes[1],
+      urlHash: firstLookupHash(initialHashes, affiliateUrl),
       sourceUrl: affiliateUrl,
       finalUrl: fetched.finalUrl,
       name: null,

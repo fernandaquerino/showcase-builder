@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { parseBrlPrice } from "@/lib/price";
 import { isSafeHttpUrl } from "@/lib/url";
+import { capitalizeFirst } from "../string";
 
 const nameSchema = z
   .string()
@@ -77,3 +78,19 @@ export const reorderProductsSchema = z.object({
 export type ProductFormValues = z.input<typeof productInputSchema>;
 /** Normalized values the schema produces (optional fields become `null`). */
 export type ProductFormData = z.output<typeof productInputSchema>;
+
+export function normalizeProductCategory(
+  category?: string | null,
+): string | null {
+  if (!category?.trim()) {
+    return null;
+  }
+
+  const [firstWord] = category.trim().split(/[\s-]+/);
+
+  if (!firstWord) {
+    return null;
+  }
+
+  return capitalizeFirst(firstWord.toLocaleLowerCase("pt-BR"));
+}

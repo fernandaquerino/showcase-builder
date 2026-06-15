@@ -23,7 +23,7 @@ describe("LiveForm", () => {
     expect(screen.getByLabelText("Título")).toBeInTheDocument();
     expect(screen.getByLabelText("Loja")).toBeInTheDocument();
     expect(screen.getByLabelText("Data da live")).toBeInTheDocument();
-    expect(screen.getByLabelText("Endereço da live")).toBeInTheDocument();
+    expect(screen.getByLabelText("Endereço da página")).toBeInTheDocument();
   });
 
   it("auto-generates the slug from the title while it is untouched", () => {
@@ -33,7 +33,7 @@ describe("LiveForm", () => {
       target: { value: "Looks de Inverno" },
     });
 
-    expect(screen.getByLabelText("Endereço da live")).toHaveValue(
+    expect(screen.getByLabelText("Endereço da página")).toHaveValue(
       "looks-de-inverno",
     );
     expect(screen.getByText("/pam/looks-de-inverno")).toBeInTheDocument();
@@ -42,14 +42,14 @@ describe("LiveForm", () => {
   it("stops auto-generating the slug once edited by hand", () => {
     render(<LiveForm mode="create" handle="pam" />);
 
-    fireEvent.change(screen.getByLabelText("Endereço da live"), {
+    fireEvent.change(screen.getByLabelText("Endereço da página"), {
       target: { value: "meu-endereco" },
     });
     fireEvent.change(screen.getByLabelText("Título"), {
       target: { value: "Outro título" },
     });
 
-    expect(screen.getByLabelText("Endereço da live")).toHaveValue(
+    expect(screen.getByLabelText("Endereço da página")).toHaveValue(
       "meu-endereco",
     );
   });
@@ -74,7 +74,7 @@ describe("LiveForm", () => {
 
     expect(screen.getByLabelText("Título")).toHaveValue("Live de Inverno");
     expect(screen.getByLabelText("Loja")).toHaveValue("C&A");
-    expect(screen.getByLabelText("Endereço da live")).toHaveValue(
+    expect(screen.getByLabelText("Endereço da página")).toHaveValue(
       "live-de-inverno",
     );
   });

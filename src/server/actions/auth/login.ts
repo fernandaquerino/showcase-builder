@@ -6,7 +6,18 @@ import { signIn } from "@/lib/auth";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 import type { ActionResult } from "@/server/actions/action-result";
 
-export async function loginAction(input: LoginInput): Promise<ActionResult> {
+function safeRedirectTo(value: string | undefined): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/admin";
+  }
+
+  return value;
+}
+
+export async function loginAction(
+  input: LoginInput,
+  callbackUrl?: string,
+): Promise<ActionResult> {
   const parsed = loginSchema.safeParse(input);
 
   if (!parsed.success) {
@@ -20,7 +31,7 @@ export async function loginAction(input: LoginInput): Promise<ActionResult> {
   try {
     await signIn("credentials", {
       ...parsed.data,
-      redirectTo: "/admin",
+      redirectTo: safeRedirectTo(callbackUrl),
     });
 
     return { success: true };

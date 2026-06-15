@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LoaderCircle } from "lucide-react";
-import { useTransition } from "react";
+import { Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 
 import { FieldError } from "@/components/auth/field-error";
@@ -17,8 +17,9 @@ import {
 } from "@/lib/validations/auth";
 import { loginAction } from "@/server/actions/auth/login";
 
-export function LoginForm() {
+export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
   const [isPending, startTransition] = useTransition();
+  const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -34,7 +35,7 @@ export function LoginForm() {
 
   function onSubmit(data: LoginData) {
     startTransition(async () => {
-      const result = await loginAction(data);
+      const result = await loginAction(data, callbackUrl);
 
       if (!result.success) {
         setError("root", { message: result.message });
@@ -43,7 +44,7 @@ export function LoginForm() {
           result.fieldErrors ?? {},
         )) {
           if (field === "email" || field === "password") {
-            setError(field, { message: messages[0] });
+            setError(field, { message: messages[0] }, { shouldFocus: true });
           }
         }
       }
@@ -73,14 +74,32 @@ export function LoginForm() {
 
       <div className="space-y-2">
         <Label htmlFor="password">Senha</Label>
-        <Input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          aria-invalid={Boolean(errors.password)}
-          aria-describedby={errors.password ? "password-error" : undefined}
-          {...register("password")}
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
+            className="pr-12"
+            aria-invalid={Boolean(errors.password)}
+            aria-describedby={errors.password ? "password-error" : undefined}
+            {...register("password")}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="absolute right-1 top-1/2 -translate-y-1/2"
+            aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
+            aria-pressed={showPassword}
+            onClick={() => setShowPassword((current) => !current)}
+          >
+            {showPassword ? (
+              <EyeOff className="size-4" aria-hidden="true" />
+            ) : (
+              <Eye className="size-4" aria-hidden="true" />
+            )}
+          </Button>
+        </div>
         <FieldError id="password-error" message={errors.password?.message} />
       </div>
 

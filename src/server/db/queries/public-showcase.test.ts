@@ -3,10 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const usersFindFirst = vi.hoisted(() => vi.fn());
 const livesFindFirst = vi.hoisted(() => vi.fn());
 const orderedProducts = vi.hoisted(() => vi.fn());
+const unstableCache = vi.hoisted(() => vi.fn((callback: () => unknown) => callback));
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({
-  unstable_cache: vi.fn((callback: () => unknown) => callback),
+  unstable_cache: unstableCache,
 }));
 vi.mock("@/server/db", () => ({
   db: {
@@ -27,7 +28,10 @@ vi.mock("@/server/db", () => ({
   },
 }));
 
-import { getPublishedShowcaseByHandle } from "./public-showcase";
+import {
+  getCachedPublishedShowcaseByHandle,
+  getPublishedShowcaseByHandle,
+} from "./public-showcase";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -55,6 +59,20 @@ describe("getPublishedShowcaseByHandle", () => {
       live: null,
       products: [],
     });
+  });
+
+  it("returns null when a slug is requested but no published live matches it", async () => {
+    usersFindFirst.mockResolvedValue({
+      id: "user-1",
+      name: "Pam Braga",
+      handle: "pambraga",
+      image: null,
+    });
+    livesFindFirst.mockResolvedValue(null);
+
+    await expect(
+      getPublishedShowcaseByHandle("pambraga", "live-antiga"),
+    ).resolves.toBeNull();
   });
 
   it("returns only public live and product fields ordered by position", async () => {
@@ -104,5 +122,19 @@ describe("getPublishedShowcaseByHandle", () => {
       products,
     });
     expect(JSON.stringify(result)).not.toContain("passwordHash");
+  });
+
+  it("uses a separate cache key for a specific live slug", async () => {
+    usersFindFirst.mockResolvedValue(null);
+
+    await getCachedPublishedShowcaseByHandle("pambraga", "live-ca");
+
+    expect(unstableCache).toHaveBeenCalledWith(
+      expect.any(Function),
+      ["published-showcase:pambraga:live-ca"],
+      expect.objectContaining({
+        tags: ["showcase:pambraga"],
+      }),
+    );
   });
 });

@@ -24,6 +24,7 @@ type LoginPageProps = {
   searchParams: Promise<{
     registered?: string;
     error?: string;
+    callbackUrl?: string;
   }>;
 };
 
@@ -80,7 +81,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </>
         )}
 
-        <LoginForm />
+        <LoginForm callbackUrl={params.callbackUrl} />
 
         <p className="text-center text-sm text-muted-foreground">
           Ainda não tem conta?{" "}
