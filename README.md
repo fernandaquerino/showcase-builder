@@ -149,9 +149,76 @@ atende (FK com cascade, unique `(user_id, slug)` e índices por usuário/status)
 
 ### Limitações atuais
 
-- Cadastro de produtos ainda não implementado (placeholder na tela de edição).
 - Página pública `[handle]` ainda não implementada.
 - Extração de links da C&A ainda não implementada.
+
+## Fase 2 — Produtos e reordenação
+
+A Fase 2 entrega a gestão **manual** de produtos dentro de cada live, na própria
+tela de edição (`/admin/lives/[liveId]`). Como na Fase 1, toda operação valida a
+sessão e a cadeia de propriedade `produto → live → usuário` no servidor; nunca
+confiamos em `liveId`, `productId`, `position` ou `userId` vindos do cliente.
+
+### Rotas administrativas
+
+| Rota                                          | Descrição                          |
+| --------------------------------------------- | ---------------------------------- |
+| `/admin/lives/[liveId]/products/new`          | Adiciona um produto à live.        |
+| `/admin/lives/[liveId]/products/[productId]`  | Edita um produto existente.        |
+
+### Adicionar, editar e excluir
+
+1. Na seção **Produtos da live**, clique em **Adicionar produto** (ou
+   **Adicionar primeiro produto** no estado vazio).
+2. Preencha **nome**, **categoria**, **link da imagem** e **link para comprar**
+   (obrigatórios); tamanho, cor e preço são opcionais. As categorias já usadas na
+   live aparecem como **sugestões** enquanto você digita.
+3. Uma **prévia** ao lado mostra imagem, categoria, nome, tamanho/cor e preço
+   enquanto você edita. Imagens que não carregam exibem um fallback.
+4. **Salvar produto** insere o produto na **última posição** e volta para a live.
+5. **Excluir** pede confirmação; ao remover, as posições restantes são
+   **reindexadas** para `0, 1, 2…`.
+
+### Reordenar
+
+- **Arrastando**: use a alça (ícone de arrastar) com mouse, toque ou teclado
+  (foque a alça, pressione **espaço** para pegar, **setas** para mover, **espaço**
+  para soltar).
+- **Botões Mover para cima / Mover para baixo**: alternativa acessível ao
+  arrastar; ficam desabilitados no primeiro/último item.
+- A nova ordem é enviada em **uma única requisição** com a lista completa de ids.
+  O servidor valida que é uma permutação exata dos produtos da live (sem
+  duplicados, faltantes, extras ou de outra live) antes de persistir. Em caso de
+  erro, a ordem anterior é **restaurada** e uma mensagem é exibida.
+
+### Preço
+
+O campo aceita formato brasileiro (`99,90`, `129`, `1.299,90`) e é normalizado
+para decimal canônico (`numeric`, nunca float) antes de salvar. Na exibição volta
+para `R$ 199,90`.
+
+### Imagens por URL
+
+Nesta fase as imagens são **apenas links** (sem upload). Como o host é arbitrário,
+a área administrativa usa `<img>` nativo com tamanho fixo (evita layout shift) e
+fallback de erro, em vez do `next/image` — assim evitamos configurar um domínio
+remoto irrestrito e o proxy do otimizador (vetor de SSRF) para hosts não
+confiáveis. Imagens otimizadas/upload entram em fase posterior.
+
+### Dependências adicionadas
+
+- `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` — drag-and-drop
+  acessível (mouse, toque e teclado).
+
+Não há **nova migration** nesta fase: a tabela `products` já foi criada na Fase 0
+(FK com cascade, índices por `live_id` e por `(live_id, position)`).
+
+### Limitações atuais (após a Fase 2)
+
+- Sem extração automática por URL (C&A / JSON-LD / Open Graph).
+- Sem upload de imagens (Vercel Blob / Cloudinary).
+- Página pública `[handle]`, filtros públicos, compartilhamento e analytics
+  ainda não implementados.
 
 ---
 

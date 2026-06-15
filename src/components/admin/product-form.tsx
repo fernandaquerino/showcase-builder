@@ -1,0 +1,307 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useId, useTransition } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
+
+import { ProductImage } from "@/components/admin/product-image";
+import { FieldError } from "@/components/auth/field-error";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { formatBrlPrice, parseBrlPrice } from "@/lib/price";
+import { isSafeHttpUrl } from "@/lib/url";
+import {
+  productInputSchema,
+  type ProductFormData,
+  type ProductFormValues,
+} from "@/lib/validations/product";
+import {
+  createProductAction,
+  updateProductAction,
+} from "@/server/actions/products";
+
+const EMPTY_VALUES: ProductFormValues = {
+  name: "",
+  category: "",
+  size: "",
+  color: "",
+  imageUrl: "",
+  productUrl: "",
+  price: "",
+};
+
+type ProductFormProps = {
+  liveId: string;
+  categorySuggestions: string[];
+} & (
+  | { mode: "create"; productId?: undefined; initialValues?: undefined }
+  | { mode: "edit"; productId: string; initialValues: ProductFormValues }
+);
+
+function previewPrice(raw: string): string | null {
+  const parsed = parseBrlPrice(raw);
+  return parsed.kind === "valid" ? formatBrlPrice(parsed.value) : null;
+}
+
+export function ProductForm({
+  liveId,
+  mode,
+  productId,
+  initialValues,
+  categorySuggestions,
+}: ProductFormProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const categoryListId = useId();
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    control,
+    getValues,
+    formState: { errors },
+  } = useForm<ProductFormValues, unknown, ProductFormData>({
+    resolver: zodResolver(productInputSchema),
+    defaultValues: initialValues ?? EMPTY_VALUES,
+  });
+
+  const preview = useWatch({ control });
+  const previewImage =
+    preview.imageUrl && isSafeHttpUrl(preview.imageUrl.trim())
+      ? preview.imageUrl.trim()
+      : null;
+  const previewPriceLabel = previewPrice(preview.price ?? "");
+
+  function applyResult(
+    result: Awaited<ReturnType<typeof createProductAction>>,
+  ): boolean {
+    if (result.success) {
+      return true;
+    }
+
+    setError("root", { message: result.message });
+    for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
+      if (field in productInputSchema.shape && messages?.[0]) {
+        setError(field as keyof ProductFormValues, { message: messages[0] });
+      }
+    }
+    return false;
+  }
+
+  function onSubmit() {
+    const values = getValues();
+
+    startTransition(async () => {
+      if (mode === "create") {
+        const result = await createProductAction(liveId, values);
+        if (applyResult(result)) {
+          toast.success("Produto adicionado à live.");
+          router.push(`/admin/lives/${liveId}`);
+        }
+        return;
+      }
+
+      const result = await updateProductAction(liveId, productId, values);
+      if (applyResult(result)) {
+        toast.success("Produto atualizado.");
+        router.push(`/admin/lives/${liveId}`);
+      }
+    });
+  }
+
+  return (
+    <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-6"
+        noValidate
+        aria-busy={isPending}
+      >
+        <div aria-live="assertive">
+          {errors.root?.message && (
+            <Alert className="border-destructive/30">
+              <AlertDescription>{errors.root.message}</AlertDescription>
+            </Alert>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="name">Nome do produto</Label>
+          <Input
+            id="name"
+            placeholder="Jaqueta jeans oversized"
+            aria-invalid={Boolean(errors.name)}
+            aria-describedby={errors.name ? "name-error" : undefined}
+            {...register("name")}
+          />
+          <FieldError id="name-error" message={errors.name?.message} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="category">Categoria</Label>
+          <Input
+            id="category"
+            list={categoryListId}
+            placeholder="Jaquetas"
+            aria-invalid={Boolean(errors.category)}
+            aria-describedby={errors.category ? "category-error" : undefined}
+            {...register("category")}
+          />
+          <datalist id={categoryListId}>
+            {categorySuggestions.map((category) => (
+              <option key={category} value={category} />
+            ))}
+          </datalist>
+          <FieldError id="category-error" message={errors.category?.message} />
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="size">Tamanho mostrado na live</Label>
+            <Input
+              id="size"
+              placeholder="P, M, G, 38, Tamanho único"
+              aria-invalid={Boolean(errors.size)}
+              aria-describedby={errors.size ? "size-error" : undefined}
+              {...register("size")}
+            />
+            <FieldError id="size-error" message={errors.size?.message} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="color">Cor mostrada na live</Label>
+            <Input
+              id="color"
+              placeholder="Azul claro"
+              aria-invalid={Boolean(errors.color)}
+              aria-describedby={errors.color ? "color-error" : undefined}
+              {...register("color")}
+            />
+            <FieldError id="color-error" message={errors.color?.message} />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="imageUrl">Link da imagem</Label>
+          <Input
+            id="imageUrl"
+            type="url"
+            inputMode="url"
+            placeholder="https://..."
+            aria-invalid={Boolean(errors.imageUrl)}
+            aria-describedby="imageUrl-help imageUrl-error"
+            {...register("imageUrl")}
+          />
+          <p id="imageUrl-help" className="text-sm text-muted-foreground">
+            Cole o endereço de uma imagem pública do produto.
+          </p>
+          <FieldError id="imageUrl-error" message={errors.imageUrl?.message} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="productUrl">Link para comprar</Label>
+          <Input
+            id="productUrl"
+            type="url"
+            inputMode="url"
+            placeholder="https://..."
+            aria-invalid={Boolean(errors.productUrl)}
+            aria-describedby="productUrl-help productUrl-error"
+            {...register("productUrl")}
+          />
+          <p id="productUrl-help" className="text-sm text-muted-foreground">
+            Cole o link que suas seguidoras usarão para comprar o produto.
+          </p>
+          <FieldError
+            id="productUrl-error"
+            message={errors.productUrl?.message}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="price">Preço, se quiser mostrar</Label>
+          <div className="relative">
+            <span
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+              aria-hidden="true"
+            >
+              R$
+            </span>
+            <Input
+              id="price"
+              inputMode="decimal"
+              placeholder="99,90"
+              className="pl-9"
+              aria-invalid={Boolean(errors.price)}
+              aria-describedby={errors.price ? "price-error" : undefined}
+              {...register("price")}
+            />
+          </div>
+          <FieldError id="price-error" message={errors.price?.message} />
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row-reverse">
+          <Button
+            type="submit"
+            loading={isPending}
+            loadingText="Salvando..."
+            fullWidth
+            className="sm:w-auto"
+          >
+            Salvar produto
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => router.push(`/admin/lives/${liveId}`)}
+            disabled={isPending}
+          >
+            Cancelar
+          </Button>
+        </div>
+      </form>
+
+      <aside className="lg:sticky lg:top-8 lg:self-start">
+        <p className="mb-3 text-sm font-medium">
+          Veja como o produto está ficando
+        </p>
+        <div className="overflow-hidden rounded-xl border bg-card">
+          <ProductImage
+            src={previewImage}
+            alt={
+              preview.name?.trim()
+                ? `Foto de ${preview.name.trim()}`
+                : "Prévia da imagem do produto"
+            }
+            className="aspect-square w-full rounded-none border-0"
+          />
+          <div className="space-y-1 p-4">
+            {preview.category?.trim() && (
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {preview.category.trim()}
+              </p>
+            )}
+            <p className="font-medium">
+              {preview.name?.trim() || "Nome do produto"}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {[preview.size?.trim(), preview.color?.trim()]
+                .filter(Boolean)
+                .join(" · ") || "Tamanho e cor aparecem aqui"}
+            </p>
+            {previewPriceLabel && (
+              <p className="pt-1 font-semibold text-foreground">
+                {previewPriceLabel}
+              </p>
+            )}
+          </div>
+        </div>
+      </aside>
+    </div>
+  );
+}

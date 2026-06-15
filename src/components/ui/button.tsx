@@ -74,8 +74,7 @@ const sizeClasses: Record<ButtonSize, string> = {
   "icon-sm": "size-9 rounded-lg",
 };
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   asChild?: boolean;
   variant?: ButtonVariant;
   size?: ButtonSize;
@@ -137,10 +136,7 @@ export function Button({
     >
       {loading ? (
         <>
-          <LoaderCircleIcon
-            className="animate-spin"
-            aria-hidden="true"
-          />
+          <LoaderCircleIcon className="animate-spin" aria-hidden="true" />
 
           <span>{loadingText ?? "Carregando..."}</span>
         </>

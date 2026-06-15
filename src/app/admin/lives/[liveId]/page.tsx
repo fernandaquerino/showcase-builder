@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { ChevronLeft, PackageOpen } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { DeleteLiveDialog } from "@/components/admin/delete-live-dialog";
 import { LiveForm } from "@/components/admin/live-form";
 import { LiveStatusBadge } from "@/components/admin/live-status-badge";
+import { ProductsSection } from "@/components/admin/products-section";
 import { PublishControl } from "@/components/admin/publish-control";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import {
 import { auth } from "@/lib/auth";
 import { liveIdSchema, type LiveFormValues } from "@/lib/validations/live";
 import { getLiveByIdForUser } from "@/server/db/queries/lives";
+import { getProductsByLiveIdForUser } from "@/server/db/queries/products";
 
 export const metadata: Metadata = {
   title: "Editar live",
@@ -45,6 +47,8 @@ export default async function EditLivePage({
   if (!live) {
     notFound();
   }
+
+  const products = await getProductsByLiveIdForUser(live.id, session.user.id);
 
   const initialValues: LiveFormValues = {
     title: live.title,
@@ -85,18 +89,10 @@ export default async function EditLivePage({
         </CardContent>
       </Card>
 
-      <Card className="mt-6 border-dashed">
-        <CardHeader className="flex-row items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-secondary text-primary">
-            <PackageOpen className="size-5" aria-hidden="true" />
-          </span>
-          <div>
-            <CardTitle className="text-lg">Produtos</CardTitle>
-            <CardDescription>
-              Os produtos desta live serão adicionados na Fase 2.
-            </CardDescription>
-          </div>
-        </CardHeader>
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <ProductsSection liveId={live.id} products={products} />
+        </CardContent>
       </Card>
 
       <Card className="mt-6 border-destructive/30">
