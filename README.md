@@ -5,6 +5,93 @@
 
 ---
 
+## Desenvolvimento local
+
+### Pré-requisitos
+
+- Node.js 20 ou superior
+- npm
+- Banco PostgreSQL no Neon
+- Projeto OAuth no Google Cloud, opcional
+
+### Instalação
+
+```bash
+npm install
+cp .env.example .env.local
+```
+
+Preencha as variáveis server-side:
+
+```env
+DATABASE_URL=""
+AUTH_SECRET=""
+AUTH_GOOGLE_ID=""
+AUTH_GOOGLE_SECRET=""
+```
+
+Gere um segredo para o Auth.js com:
+
+```bash
+npx auth secret
+```
+
+`DATABASE_URL` e `AUTH_SECRET` são obrigatórias. As variáveis do Google devem
+ser preenchidas juntas; quando ambas estiverem vazias, login e cadastro por
+e-mail continuam funcionando e o botão do Google não é exibido.
+
+### Google OAuth
+
+Crie credenciais OAuth 2.0 do tipo aplicação web no Google Cloud Console.
+Durante o desenvolvimento, configure esta URI de redirecionamento autorizada:
+
+```text
+http://localhost:3000/api/auth/callback/google
+```
+
+O MVP não vincula silenciosamente uma conta Google a uma conta Credentials que
+já possua o mesmo e-mail. A pessoa deve entrar pelo método usado originalmente;
+essa política evita account linking sem comprovação de posse da conta existente.
+
+### Banco de dados
+
+```bash
+npm run db:generate # gera migration SQL versionada
+npm run db:migrate  # aplica migrations pendentes
+npm run db:studio   # abre o Drizzle Studio
+```
+
+Revise sempre o SQL em `drizzle/` antes de aplicar uma nova migration. O fluxo
+principal não utiliza `drizzle-kit push`.
+
+### Comandos
+
+```bash
+npm run dev
+npm run test
+npm run lint
+npm run typecheck
+npm run build
+```
+
+### Estrutura principal
+
+```text
+src/
+├── app/                  # rotas públicas, auth, admin e API do Auth.js
+├── components/           # componentes de auth, admin e shadcn/ui
+├── lib/                  # auth, ambiente, validações e utilitários
+├── server/actions/       # Server Actions
+├── server/db/            # cliente, queries e schemas Drizzle
+└── types/                # ampliações de tipos do Auth.js
+```
+
+O admin em `/admin` possui proteção no `src/proxy.ts` e nova verificação
+server-side em seu layout. A criação de lives e produtos começa apenas nas
+próximas fases.
+
+---
+
 ## 1. Visão geral
 
 ### Problema

@@ -1,65 +1,84 @@
-import Image from "next/image";
+import { ArrowRight, Check, ShoppingBag } from "lucide-react";
+import Link from "next/link";
 
-export default function Home() {
+import { Button } from "@/components/ui/button";
+import { auth } from "@/lib/auth";
+
+const benefits = [
+  "Todos os produtos da live em um só link",
+  "Experiência rápida e clara no celular",
+  "Uma área simples para organizar sua vitrine",
+];
+
+export default async function HomePage() {
+  const session = await auth();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="relative isolate min-h-screen overflow-hidden">
+      <div className="absolute inset-x-0 top-0 -z-10 h-96 bg-[radial-gradient(circle_at_top_right,oklch(0.9_0.08_30),transparent_55%)]" />
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
+        <Link href="/" className="flex items-center gap-2 font-semibold">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <ShoppingBag className="size-5" aria-hidden="true" />
+          </span>
+          Live Showcase
+        </Link>
+        <Button asChild variant="ghost">
+          <Link href={session ? "/admin" : "/login"}>
+            {session ? "Ir para o admin" : "Entrar"}
+          </Link>
+        </Button>
+      </header>
+
+      <section className="mx-auto grid w-full max-w-6xl items-center gap-14 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[1.1fr_0.9fr] lg:py-32">
+        <div>
+          <span className="inline-flex rounded-full border bg-card px-3 py-1 text-sm font-medium text-primary shadow-sm">
+            Sua live continua vendendo depois que termina
+          </span>
+          <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
+            Uma vitrine bonita para cada produto da sua live.
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
+            Organize links, fotos e detalhes em uma página feita para suas
+            seguidoras encontrarem o que viram, sem se perder nos stories.
           </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Button asChild size="lg">
+              <Link href={session ? "/admin" : "/signup"}>
+                {session ? "Abrir meu painel" : "Criar minha conta"}
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </Button>
+            {!session && (
+              <Button asChild size="lg" variant="outline">
+                <Link href="/login">Já tenho uma conta</Link>
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="rounded-3xl border bg-card p-6 shadow-xl shadow-primary/5 sm:p-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+            Feito para criadoras
+          </p>
+          <ul className="mt-6 space-y-5">
+            {benefits.map((benefit) => (
+              <li key={benefit} className="flex items-start gap-3">
+                <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-primary">
+                  <Check className="size-4" aria-hidden="true" />
+                </span>
+                <span className="leading-6">{benefit}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-8 rounded-2xl bg-muted p-5">
+            <p className="font-medium">A fundação está pronta.</p>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              A criação e publicação de lives chega na próxima fase.
+            </p>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
