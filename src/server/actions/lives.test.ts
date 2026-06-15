@@ -6,6 +6,7 @@ import {
   deleteLiveAction,
   publishLiveAction,
   unpublishLiveAction,
+  updateLiveThemeAction,
   updateLiveAction,
 } from "@/server/actions/lives";
 import {
@@ -16,6 +17,7 @@ import {
   publishLive,
   unpublishLive,
   updateLive,
+  updateLiveTheme,
 } from "@/server/db/queries/lives";
 import { deleteCoverImage } from "@/server/lib/storage/cover-image";
 
@@ -30,6 +32,7 @@ vi.mock("@/server/db/queries/lives", () => ({
   publishLive: vi.fn(),
   unpublishLive: vi.fn(),
   deleteLive: vi.fn(),
+  updateLiveTheme: vi.fn(),
   getLiveByIdForUser: vi.fn(),
   isLiveSlugAvailable: vi.fn(),
 }));
@@ -210,5 +213,76 @@ describe("createLiveAction", () => {
 
     expect(result.success).toBe(false);
     expect(createLive).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateLiveThemeAction", () => {
+  const validTheme = {
+    preset: "fashion",
+    primaryColor: "#BE185D",
+    backgroundColor: "#FFF1F6",
+    textMode: "auto",
+    buttonStyle: "rounded",
+    cardStyle: "shadow",
+    fontPreset: "elegant",
+    heroStyle: "overlay",
+  } as const;
+
+  it("rejects when there is no session", async () => {
+    authMock.mockResolvedValue(null);
+
+    const result = await updateLiveThemeAction(LIVE_ID, validTheme);
+
+    expect(result.success).toBe(false);
+    expect(updateLiveTheme).not.toHaveBeenCalled();
+  });
+
+  it("updates the theme scoped to the session user", async () => {
+    signedIn();
+    vi.mocked(updateLiveTheme).mockResolvedValue({
+      id: LIVE_ID,
+      status: "draft",
+    } as never);
+
+    const result = await updateLiveThemeAction(LIVE_ID, validTheme);
+
+    expect(result.success).toBe(true);
+    expect(updateLiveTheme).toHaveBeenCalledWith(LIVE_ID, USER_ID, validTheme);
+  });
+
+  it("clears the theme when restoring the default", async () => {
+    signedIn();
+    vi.mocked(updateLiveTheme).mockResolvedValue({
+      id: LIVE_ID,
+      status: "draft",
+    } as never);
+
+    await updateLiveThemeAction(LIVE_ID, null);
+
+    expect(updateLiveTheme).toHaveBeenCalledWith(LIVE_ID, USER_ID, null);
+  });
+
+  it("rejects invalid payloads", async () => {
+    signedIn();
+
+    const result = await updateLiveThemeAction(LIVE_ID, {
+      ...validTheme,
+      primaryColor: "red",
+    });
+
+    expect(result.success).toBe(false);
+    expect(updateLiveTheme).not.toHaveBeenCalled();
+  });
+
+  it("returns not found when the live does not belong to the user", async () => {
+    signedIn();
+    vi.mocked(updateLiveTheme).mockResolvedValue(null);
+
+    const result = await updateLiveThemeAction(LIVE_ID, validTheme);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.message).toBe("Não encontramos essa live.");
+    }
   });
 });

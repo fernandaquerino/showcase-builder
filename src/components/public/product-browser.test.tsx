@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import { getDefaultLiveTheme } from "@/lib/live-theme";
 import { ProductBrowser } from "./product-browser";
 
 const products = [
@@ -30,7 +31,7 @@ const products = [
 
 describe("ProductBrowser", () => {
   it("filters products by category and updates the counter", () => {
-    render(<ProductBrowser products={products} />);
+    render(<ProductBrowser products={products} theme={getDefaultLiveTheme()} />);
 
     expect(screen.getByText("2 de 2 produtos")).toBeInTheDocument();
 
@@ -45,7 +46,7 @@ describe("ProductBrowser", () => {
   });
 
   it("shows the empty live state when there are no products", () => {
-    render(<ProductBrowser products={[]} />);
+    render(<ProductBrowser products={[]} theme={getDefaultLiveTheme()} />);
 
     expect(
       screen.getByText("Os produtos desta live serão adicionados em breve."),

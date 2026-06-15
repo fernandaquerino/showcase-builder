@@ -23,7 +23,7 @@ function initials(name: string): string {
 
 export function CreatorFooter({ creator }: CreatorFooterProps) {
   return (
-    <footer className="border-t border-stone-200/70 py-8">
+    <footer className="border-t border-[var(--live-border)] py-8">
       <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:text-left">
         <div className="flex items-center gap-3">
           <Avatar className="size-12 border bg-secondary">
@@ -36,16 +36,16 @@ export function CreatorFooter({ creator }: CreatorFooterProps) {
             <AvatarFallback>{initials(creator.name)}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-semibold text-foreground">
+            <p className="font-semibold">
               Curadoria de @{creator.handle}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-[var(--live-muted-foreground)]">
               Vitrine criada por {creator.name}.
             </p>
           </div>
         </div>
 
-        <Button asChild variant="link" className="text-muted-foreground">
+        <Button asChild variant="link" className="text-[var(--live-primary)]">
           <Link href="/">Criar minha vitrine</Link>
         </Button>
       </div>

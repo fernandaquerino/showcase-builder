@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import type { LiveThemeConfig } from "@/lib/live-theme";
 import type { PublicProduct } from "@/server/db/queries/public-showcase";
 import { PublicEmptyState } from "./public-empty-state";
 import { PublicProductCard } from "./public-product-card";
@@ -13,11 +14,12 @@ import {
 
 type ProductBrowserProps = {
   products: PublicProduct[];
+  theme: LiveThemeConfig;
 };
 
 const ALL = "Tudo";
 
-export function ProductBrowser({ products }: ProductBrowserProps) {
+export function ProductBrowser({ products, theme }: ProductBrowserProps) {
   const [activeCategory, setActiveCategory] = useState(ALL);
   const categories = useMemo(() => deriveCategoryOptions(products), [products]);
   const visibleProducts = products.filter((product) =>
@@ -37,7 +39,7 @@ export function ProductBrowser({ products }: ProductBrowserProps) {
     <section id="produtos" aria-labelledby="products-heading" className="space-y-6 scroll-mt-6">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--live-primary)]">
             Vitrine
           </p>
           <h2
@@ -46,22 +48,22 @@ export function ProductBrowser({ products }: ProductBrowserProps) {
           >
             Produtos escolhidos
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground" aria-live="polite">
+          <p className="mt-1 text-sm text-[var(--live-muted-foreground)]" aria-live="polite">
             {visibleProducts.length} de {products.length} produtos
           </p>
         </div>
       </div>
 
-      <div className="sticky top-0 z-20 -mx-5 border-y border-stone-200/70 bg-stone-50/88 px-5 py-3 backdrop-blur sm:top-2 sm:mx-0 sm:rounded-2xl sm:border sm:px-3">
+      <div className="sticky top-0 z-20 -mx-5 border-y border-[var(--live-border)] bg-[color-mix(in_srgb,var(--live-background)_88%,transparent)] px-5 py-3 backdrop-blur sm:top-2 sm:mx-0 sm:rounded-[var(--live-radius)] sm:border sm:px-3">
         <div
           className="flex gap-2 overflow-x-auto pb-1 sm:pb-0"
           aria-label="Filtrar produtos por categoria"
         >
           <Button
             type="button"
-            variant={activeCategory === ALL ? "default" : "outline"}
+            variant="outline"
             aria-pressed={activeCategory === ALL}
-            className="min-h-11 shrink-0 rounded-full px-5"
+            className="min-h-11 shrink-0 rounded-[var(--live-radius)] border-[var(--live-border)] px-5 aria-pressed:border-[var(--live-primary)] aria-pressed:bg-[var(--live-primary)] aria-pressed:text-[var(--live-primary-foreground)]"
             onClick={() => setActiveCategory(ALL)}
           >
             Tudo <span className="ml-1 opacity-75">{products.length}</span>
@@ -70,9 +72,9 @@ export function ProductBrowser({ products }: ProductBrowserProps) {
             <Button
               key={category.label}
               type="button"
-              variant={activeCategory === category.label ? "default" : "outline"}
+              variant="outline"
               aria-pressed={activeCategory === category.label}
-              className="min-h-11 shrink-0 rounded-full px-5"
+              className="min-h-11 shrink-0 rounded-[var(--live-radius)] border-[var(--live-border)] px-5 aria-pressed:border-[var(--live-primary)] aria-pressed:bg-[var(--live-primary)] aria-pressed:text-[var(--live-primary-foreground)]"
               onClick={() => setActiveCategory(category.label)}
             >
               {category.label}
@@ -97,6 +99,7 @@ export function ProductBrowser({ products }: ProductBrowserProps) {
             <PublicProductCard
               key={product.id}
               product={product}
+              theme={theme}
               priority={index < 2}
             />
           ))}

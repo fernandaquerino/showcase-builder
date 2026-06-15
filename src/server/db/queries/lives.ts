@@ -2,6 +2,7 @@ import "server-only";
 
 import { and, desc, eq, ne, sql } from "drizzle-orm";
 
+import type { LiveThemeConfig } from "@/lib/live-theme";
 import type { LiveFormData } from "@/lib/validations/live";
 import { db } from "@/server/db";
 import { lives } from "@/server/db/schema";
@@ -76,6 +77,21 @@ export async function updateLive(
   const [live] = await db
     .update(lives)
     .set({ ...input, updatedAt: new Date() })
+    .where(and(eq(lives.id, liveId), eq(lives.userId, userId)))
+    .returning();
+
+  return live ?? null;
+}
+
+/** Updates only the visual theme for a live scoped to its owner. */
+export async function updateLiveTheme(
+  liveId: string,
+  userId: string,
+  themeConfig: LiveThemeConfig | null,
+): Promise<Live | null> {
+  const [live] = await db
+    .update(lives)
+    .set({ themeConfig, updatedAt: new Date() })
     .where(and(eq(lives.id, liveId), eq(lives.userId, userId)))
     .returning();
 

@@ -407,6 +407,39 @@ escolhe uma imagem do celular/computador; nada de copiar endereços.
 - **Componente:** `LiveImageUpload` (seleção, preview, upload, troca, remoção,
   loading, erro). O submit da live fica bloqueado enquanto o upload acontece.
 
+### Personalização visual por live
+
+A edição da live possui a seção **Aparência da página**, para ajustar a vitrine
+pública sem CSS ou conhecimento técnico.
+
+- **Persistência:** cada live salva sua aparência em `lives.theme_config`
+  (`jsonb`). A migration incremental é `drizzle/0004_add_live_theme_config.sql`.
+  Lives sem configuração usam o tema padrão em código.
+- **Presets:** `Clássico`, `Minimalista`, `Fashion`, `Romântico` e `Noturno`.
+  Os presets são tipados em `src/lib/live-theme.ts` e podem ser sobrescritos por
+  opções seguras.
+- **Campos disponíveis:** cor principal, cor de fundo, estilo de botão
+  (`Arredondado`, `Suave`, `Reto`), estilo de card (`Com sombra`, `Com borda`,
+  `Sem destaque`), tipografia (`Moderna`, `Elegante`, `Clássica`) e hero
+  (`Imagem em destaque`, `Imagem com texto sobreposto`, `Visual limpo`).
+- **Cores:** aceita somente hexadecimal `#RRGGBB`. Não é permitido inserir CSS,
+  HTML ou JavaScript customizado; também não há upload de fontes.
+- **Acessibilidade:** helpers puros calculam contraste, foreground recomendado
+  e bloqueiam combinações criticamente ilegíveis antes de salvar.
+- **Preview:** a prévia é local, com alternância `Celular`/`Computador`; não
+  salva automaticamente, não faz requests, não abre links reais e não dispara
+  revalidação.
+- **Salvar/restaurar:** `updateLiveThemeAction` valida sessão, propriedade da
+  live e payload Zod. Ao salvar uma live publicada, revalida a vitrine pública;
+  `Restaurar tema padrão` remove a configuração salva.
+- **Aplicação pública:** a página pública recebe variáveis CSS escopadas
+  (`--live-background`, `--live-foreground`, `--live-primary`,
+  `--live-primary-foreground`, `--live-card`, `--live-border`,
+  `--live-muted`, `--live-radius`, `--live-font-family`). Admin, login e outras
+  lives não são afetados.
+- **Testes:** cobrem schema, campos extras, contraste, presets, preview, reset,
+  Server Action e componentes públicos com tema.
+
 ### Importação de produtos em lote
 
 Em vez de cadastrar um produto por vez, a criadora cola **vários links de

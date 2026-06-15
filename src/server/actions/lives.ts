@@ -10,6 +10,10 @@ import {
   liveInputSchema,
   type LiveFormValues,
 } from "@/lib/validations/live";
+import {
+  liveThemeConfigSchema,
+  type LiveThemeConfigInput,
+} from "@/lib/validations/live-theme";
 import type { ActionResult } from "@/server/actions/action-result";
 import {
   createLive,
@@ -19,6 +23,7 @@ import {
   publishLive,
   unpublishLive,
   updateLive,
+  updateLiveTheme,
 } from "@/server/db/queries/lives";
 import { getPublishedLiveContextById } from "@/server/db/queries/public-showcase";
 import { deleteCoverImage } from "@/server/lib/storage/cover-image";
@@ -197,6 +202,58 @@ export async function updateLiveAction(
       cause: error instanceof Error ? error.name : "UnknownError",
     });
     return { success: false, message: GENERIC_SAVE_ERROR };
+  }
+}
+
+export async function updateLiveThemeAction(
+  liveId: string,
+  input: LiveThemeConfigInput | null,
+): Promise<ActionResult> {
+  const userId = await getSessionUserId();
+
+  if (!userId) {
+    return { success: false, message: SESSION_EXPIRED };
+  }
+
+  const parsedId = liveIdSchema.safeParse(liveId);
+
+  if (!parsedId.success) {
+    return { success: false, message: NOT_FOUND };
+  }
+
+  const parsed = input === null
+    ? { success: true as const, data: null }
+    : liveThemeConfigSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: "Revise as opções de aparência.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    const live = await updateLiveTheme(parsedId.data, userId, parsed.data);
+
+    if (!live) {
+      return { success: false, message: NOT_FOUND };
+    }
+
+    revalidateLive(live.id);
+    if (live.status === "published") {
+      await revalidatePublicLive(live.id);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Update live theme failed.", {
+      cause: error instanceof Error ? error.name : "UnknownError",
+    });
+    return {
+      success: false,
+      message: "Não foi possível salvar a aparência. Tente novamente.",
+    };
   }
 }
 

@@ -5,17 +5,20 @@ import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { LiveThemeConfig } from "@/lib/live-theme";
 import { formatBrlPrice } from "@/lib/price";
 import { cn } from "@/lib/utils";
 import type { PublicProduct } from "@/server/db/queries/public-showcase";
 
 type PublicProductCardProps = {
   product: PublicProduct;
+  theme: LiveThemeConfig;
   priority?: boolean;
 };
 
 export function PublicProductCard({
   product,
+  theme,
   priority = false,
 }: PublicProductCardProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
@@ -23,10 +26,18 @@ export function PublicProductCard({
   const price = formatBrlPrice(product.price);
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200/70 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0">
-      <div className="relative aspect-[3/4] overflow-hidden bg-stone-100">
+    <article
+      className={cn(
+        "group flex h-full flex-col overflow-hidden bg-[var(--live-card)] text-[var(--live-card-foreground)] transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0",
+        theme.cardStyle === "shadow" && "shadow-sm ring-1 ring-[var(--live-border)] hover:shadow-md",
+        theme.cardStyle === "border" && "border border-[var(--live-border)]",
+        theme.cardStyle === "flat" && "border border-transparent",
+      )}
+      style={{ borderRadius: "var(--live-radius)" }}
+    >
+      <div className="relative aspect-[3/4] overflow-hidden bg-[var(--live-muted)]">
         {showFallback ? (
-          <div className="flex size-full flex-col items-center justify-center gap-2 px-3 text-center text-xs text-muted-foreground">
+          <div className="flex size-full flex-col items-center justify-center gap-2 px-3 text-center text-xs text-[var(--live-muted-foreground)]">
             <ImageOff className="size-6" aria-hidden="true" />
             <span>Imagem indisponível</span>
           </div>
@@ -45,16 +56,19 @@ export function PublicProductCard({
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-3 sm:p-4">
-        <Badge variant="secondary" className="w-fit rounded-full px-2.5">
+        <Badge
+          variant="secondary"
+          className="w-fit rounded-full bg-[var(--live-primary)] px-2.5 text-[var(--live-primary-foreground)]"
+        >
           {product.category}
         </Badge>
 
         <div className="space-y-1">
-          <h3 className="line-clamp-3 text-sm font-semibold leading-5 text-stone-950 sm:text-base sm:leading-6">
+          <h3 className="line-clamp-3 text-sm font-semibold leading-5 sm:text-base sm:leading-6">
             {product.name}
           </h3>
           {(product.size || product.color) && (
-            <p className="text-xs leading-5 text-muted-foreground">
+            <p className="text-xs leading-5 text-[var(--live-muted-foreground)]">
               {[product.size && `Tam. ${product.size}`, product.color]
                 .filter(Boolean)
                 .join(" · ")}
@@ -64,14 +78,14 @@ export function PublicProductCard({
 
         <div className="mt-auto space-y-3">
           {price && (
-            <p className="text-lg font-semibold tracking-tight text-stone-950">
+            <p className="text-lg font-semibold tracking-tight">
               {price}
             </p>
           )}
           <Button
             asChild
             size="sm"
-            className={cn("min-h-11 w-full rounded-full px-3")}
+            className="min-h-11 w-full rounded-[var(--live-radius)] bg-[var(--live-primary)] px-3 text-[var(--live-primary-foreground)] hover:bg-[color-mix(in_srgb,var(--live-primary)_90%,black)]"
           >
             <a
               href={product.productUrl}

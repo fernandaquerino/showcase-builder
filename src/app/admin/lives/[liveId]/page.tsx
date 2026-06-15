@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { DeleteLiveDialog } from "@/components/admin/delete-live-dialog";
+import { LiveAppearanceSection } from "@/components/admin/live-appearance-section";
 import { LiveForm } from "@/components/admin/live-form";
 import { LiveStatusBadge } from "@/components/admin/live-status-badge";
 import { ProductsSection } from "@/components/admin/products-section";
@@ -17,6 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { parseLiveThemeConfig } from "@/lib/validations/live-theme";
 import { liveIdSchema, type LiveFormValues } from "@/lib/validations/live";
 import { getLiveByIdForUser } from "@/server/db/queries/lives";
 import { getProductsByLiveIdForUser } from "@/server/db/queries/products";
@@ -59,8 +61,10 @@ export default async function EditLivePage({
     slug: live.slug,
   };
 
+  const themeConfig = parseLiveThemeConfig(live.themeConfig);
+
   return (
-    <main className="mx-auto w-full max-w-2xl px-5 py-10 sm:px-8 sm:py-14">
+    <main className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
       <Link
         href="/admin"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -84,6 +88,18 @@ export default async function EditLivePage({
             handle={session.user.handle}
             liveId={live.id}
             initialValues={initialValues}
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <LiveAppearanceSection
+            liveId={live.id}
+            title={live.title}
+            coverImageUrl={live.coverImageUrl}
+            initialTheme={themeConfig}
+            products={products}
           />
         </CardContent>
       </Card>

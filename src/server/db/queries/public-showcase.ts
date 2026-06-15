@@ -3,6 +3,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { asc, eq } from "drizzle-orm";
 
+import type { LiveThemeConfig } from "@/lib/live-theme";
 import {
   SHOWCASE_REVALIDATE_SECONDS,
   showcaseTag,
@@ -23,6 +24,7 @@ export type PublicLive = {
   liveTime: string | null;
   coverImageUrl: string | null;
   instagramUrl: string | null;
+  themeConfig: LiveThemeConfig | null;
   slug: string;
   publishedAt: Date | null;
 };
@@ -78,6 +80,7 @@ export async function getPublishedShowcaseByHandle(
       liveTime: true,
       coverImageUrl: true,
       instagramUrl: true,
+      themeConfig: true,
       slug: true,
       publishedAt: true,
     },

@@ -60,7 +60,7 @@ function CountdownValue({
   label: string;
 }) {
   return (
-    <span className="flex min-w-14 flex-col items-center gap-1 rounded-2xl bg-white/85 px-2 py-2 text-stone-950 shadow-sm ring-1 ring-black/5 backdrop-blur">
+    <span className="flex min-w-14 flex-col items-center gap-1 rounded-[var(--live-radius)] bg-white/85 px-2 py-2 text-stone-950 shadow-sm ring-1 ring-black/5 backdrop-blur">
       <span className="font-mono text-2xl font-semibold tabular-nums leading-none">
         {String(value).padStart(2, "0")}
       </span>
@@ -129,13 +129,13 @@ export function LiveStatusPanel({
   return (
     <div className="space-y-5">
       <div
-        className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white/90 px-4 text-sm font-semibold text-stone-950 shadow-sm ring-1 ring-black/5"
+        className="inline-flex min-h-10 items-center gap-2 rounded-[var(--live-radius)] bg-white/90 px-4 text-sm font-semibold text-stone-950 shadow-sm ring-1 ring-black/5"
         aria-live="polite"
       >
         <Radio
           className={cn(
             "size-4",
-            state === "live" ? "text-red-600" : "text-primary",
+            state === "live" ? "text-red-600" : "text-[var(--live-primary)]",
           )}
           aria-hidden="true"
         />
@@ -149,7 +149,7 @@ export function LiveStatusPanel({
       <Button
         asChild
         size="lg"
-        className="min-h-12 rounded-full px-6 shadow-sm motion-safe:scroll-smooth"
+        className="min-h-12 rounded-[var(--live-radius)] bg-[var(--live-primary)] px-6 text-[var(--live-primary-foreground)] shadow-sm motion-safe:scroll-smooth"
       >
         <a href="#produtos">
           {ctaLabel[state]}

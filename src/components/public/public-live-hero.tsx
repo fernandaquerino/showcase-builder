@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { formatLiveDate, formatLiveTime } from "@/lib/format";
+import { parseLiveThemeConfig } from "@/lib/validations/live-theme";
 import {
   combineLiveDateAndTime,
   getCountdownParts,
@@ -60,10 +61,11 @@ export function PublicLiveHero({
     ? getCountdownParts(startsAt)
     : { days: 0, hours: 0, minutes: 0, seconds: 0 };
   const time = formatLiveTime(live?.liveTime ?? null);
-  const hasCover = Boolean(live?.coverImageUrl);
+  const theme = parseLiveThemeConfig(live?.themeConfig);
+  const hasCover = Boolean(live?.coverImageUrl) && theme.heroStyle !== "clean";
 
   return (
-    <header className="relative isolate overflow-hidden rounded-b-[2rem] bg-stone-950 text-white shadow-sm sm:rounded-[2rem]">
+    <header className="relative isolate overflow-hidden rounded-b-[2rem] bg-[var(--live-primary)] text-[var(--live-primary-foreground)] shadow-sm sm:rounded-[2rem]">
       {hasCover ? (
         <>
           {/* Remote creator-provided image URL; keep native img to avoid an unrestricted next/image proxy. */}
@@ -77,7 +79,7 @@ export function PublicLiveHero({
         </>
       ) : (
         <>
-          <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_20%_20%,rgba(244,114,182,0.26),transparent_32%),radial-gradient(circle_at_80%_10%,rgba(251,191,36,0.2),transparent_30%),linear-gradient(135deg,#292524_0%,#111827_55%,#3f1d2f_100%)]" />
+          <div className="absolute inset-0 -z-20 bg-[linear-gradient(135deg,var(--live-primary)_0%,var(--live-background)_100%)]" />
           <div className="absolute right-6 top-10 -z-10 size-28 rounded-full border border-white/10 bg-white/10 blur-sm sm:size-44" />
         </>
       )}
@@ -146,7 +148,7 @@ export function PublicLiveHero({
             <Button
               asChild
               variant="outline"
-              className="min-h-11 rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              className="min-h-11 rounded-[var(--live-radius)] border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
             >
               <Link
                 href={live.instagramUrl}

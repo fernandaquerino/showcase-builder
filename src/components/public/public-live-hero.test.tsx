@@ -35,6 +35,7 @@ const live = {
   liveTime: "20:00",
   coverImageUrl: "https://cdn.exemplo.com/capa.jpg",
   instagramUrl: "https://instagram.com/pambraga",
+  themeConfig: null,
   slug: "live-de-inverno",
   publishedAt: new Date("2026-06-15T10:00:00.000Z"),
 };

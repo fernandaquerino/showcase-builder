@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import { notFound } from "next/navigation";
 
 import { CreatorFooter } from "@/components/public/creator-footer";
@@ -9,9 +10,11 @@ import { PublicLiveHero } from "@/components/public/public-live-hero";
 import { ShareShowcase } from "@/components/public/share-showcase";
 import { formatLiveDate, formatLiveTime } from "@/lib/format";
 import { normalizeHandle } from "@/lib/handle";
+import { getLiveThemeCssVariables } from "@/lib/live-theme";
 import { getPublicLiveState } from "@/lib/public-live-state";
 import { buildPublicUrl } from "@/lib/public-url";
 import { slugify } from "@/lib/slug";
+import { parseLiveThemeConfig } from "@/lib/validations/live-theme";
 import {
   getCachedPublishedShowcaseByHandle,
   getPublishedShowcaseByHandle,
@@ -149,9 +152,14 @@ export async function PublicShowcasePageContent({
   }
 
   const shareUrl = publicUrl(normalizedHandle, showcase.live?.slug);
+  const theme = parseLiveThemeConfig(showcase.live?.themeConfig);
+  const themeStyle = getLiveThemeCssVariables(theme) as CSSProperties;
 
   return (
-    <main className="min-h-screen bg-stone-50 text-foreground">
+    <main
+      className="min-h-screen bg-[var(--live-background)] font-[family-name:var(--live-font-family)] text-[var(--live-foreground)]"
+      style={themeStyle}
+    >
       <a
         href="#conteudo"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow"
@@ -185,9 +193,10 @@ export async function PublicShowcasePageContent({
             />
           ) : (
             <>
-              <ProductBrowser
-                products={showcase.products}
-              />
+          <ProductBrowser
+            products={showcase.products}
+            theme={theme}
+          />
               <ShareShowcase url={shareUrl} creator={showcase.creator} />
             </>
           )}

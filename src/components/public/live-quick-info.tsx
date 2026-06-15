@@ -67,13 +67,13 @@ export function LiveQuickInfo({
         return (
           <div
             key={item.label}
-            className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-stone-200/70 backdrop-blur"
+            className="rounded-[var(--live-radius)] bg-[var(--live-card)] p-4 text-[var(--live-card-foreground)] shadow-sm ring-1 ring-[var(--live-border)] backdrop-blur"
           >
-            <Icon className="size-5 text-primary" aria-hidden="true" />
-            <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <Icon className="size-5 text-[var(--live-primary)]" aria-hidden="true" />
+            <p className="mt-3 text-xs font-medium uppercase tracking-wide text-[var(--live-muted-foreground)]">
               {item.label}
             </p>
-            <p className="mt-1 text-sm font-semibold text-foreground">
+            <p className="mt-1 text-sm font-semibold">
               {item.value}
             </p>
           </div>

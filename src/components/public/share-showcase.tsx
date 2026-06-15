@@ -61,7 +61,7 @@ export function ShareShowcase({ url, creator }: ShareShowcaseProps) {
   return (
     <section
       aria-labelledby="share-heading"
-      className="overflow-hidden rounded-3xl bg-stone-950 text-white shadow-sm"
+      className="overflow-hidden rounded-[var(--live-radius)] bg-[var(--live-primary)] text-[var(--live-primary-foreground)] shadow-sm"
     >
       <div className="relative p-6 sm:p-8">
         <div className="absolute right-5 top-5 hidden sm:block">
@@ -91,7 +91,7 @@ export function ShareShowcase({ url, creator }: ShareShowcaseProps) {
         <div className="relative mt-6 flex flex-col gap-2 sm:flex-row">
           <Button
             type="button"
-            className="min-h-12 rounded-full bg-white text-stone-950 hover:bg-white/90"
+            className="min-h-12 rounded-[var(--live-radius)] bg-[var(--live-primary-foreground)] text-[var(--live-primary)] hover:bg-[color-mix(in_srgb,var(--live-primary-foreground)_90%,transparent)]"
             onClick={() => void shareLink()}
           >
             <Share2 className="size-4" aria-hidden="true" />
@@ -99,7 +99,7 @@ export function ShareShowcase({ url, creator }: ShareShowcaseProps) {
           </Button>
           <Button
             asChild
-            className="min-h-12 rounded-full bg-white text-stone-950 hover:bg-white/90"
+            className="min-h-12 rounded-[var(--live-radius)] bg-[var(--live-primary-foreground)] text-[var(--live-primary)] hover:bg-[color-mix(in_srgb,var(--live-primary-foreground)_90%,transparent)]"
           >
             <a
               href={buildWhatsAppShareUrl(url)}
@@ -113,7 +113,7 @@ export function ShareShowcase({ url, creator }: ShareShowcaseProps) {
           <Button
             type="button"
             variant="outline"
-            className="min-h-12 rounded-full border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+            className="min-h-12 rounded-[var(--live-radius)] border-white/25 bg-white/10 text-[var(--live-primary-foreground)] hover:bg-white/20 hover:text-[var(--live-primary-foreground)]"
             onClick={() => void copyLink()}
           >
             <Copy className="size-4" aria-hidden="true" />

@@ -1,6 +1,7 @@
 import {
   date,
   index,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -10,6 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { users } from "./auth";
+import type { LiveThemeConfig } from "@/lib/live-theme";
 
 export const liveStatus = pgEnum("live_status", ["draft", "published"]);
 
@@ -25,6 +27,7 @@ export const lives = pgTable(
     liveTime: text("live_time"),
     coverImageUrl: text("cover_image_url"),
     instagramUrl: text("instagram_url"),
+    themeConfig: jsonb("theme_config").$type<LiveThemeConfig | null>(),
     slug: text("slug").notNull(),
     status: liveStatus("status").default("draft").notNull(),
     publishedAt: timestamp("published_at", {

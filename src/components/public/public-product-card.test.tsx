@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import { getDefaultLiveTheme } from "@/lib/live-theme";
 import { PublicProductCard } from "./public-product-card";
 
 const product = {
@@ -17,7 +18,7 @@ const product = {
 
 describe("PublicProductCard", () => {
   it("renders product details, formatted price and a safe external link", () => {
-    render(<PublicProductCard product={product} />);
+    render(<PublicProductCard product={product} theme={getDefaultLiveTheme()} />);
 
     expect(screen.getByText("Jaqueta preta")).toBeInTheDocument();
     expect(screen.getByText("Jaquetas")).toBeInTheDocument();
@@ -38,6 +39,7 @@ describe("PublicProductCard", () => {
     render(
       <PublicProductCard
         product={{ ...product, size: null, color: null, price: null }}
+        theme={getDefaultLiveTheme()}
       />,
     );
 
