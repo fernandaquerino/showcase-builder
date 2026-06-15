@@ -4,6 +4,7 @@ import type {
   ExtractableField,
   ExtractionSource,
 } from "@/lib/validations/extract";
+import { decodeHtmlEntities } from "@/lib/string";
 import { normalizeUrlForCache } from "./cache-key";
 import { parseHttpUrl } from "./url-guard";
 
@@ -40,7 +41,13 @@ export type NormalizedProduct = Omit<
 };
 
 function cleanText(value: string | null, maxLength: number): string | null {
-  const cleaned = value?.replace(/\s+/g, " ").trim().slice(0, maxLength).trim();
+  const cleaned = value
+    ? decodeHtmlEntities(value)
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, maxLength)
+        .trim()
+    : null;
   return cleaned || null;
 }
 

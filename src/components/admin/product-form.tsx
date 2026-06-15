@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatBrlPrice, parseBrlPrice } from "@/lib/price";
-import { capitalizeFirst } from "@/lib/string";
+import { capitalizeFirst, decodeHtmlEntities } from "@/lib/string";
 import { isSafeHttpUrl } from "@/lib/url";
 import type { ExtractionSuccessData } from "@/lib/validations/extract";
 import {
@@ -47,7 +47,10 @@ const EXTRACTION_TARGETS: ReadonlyArray<{
   field: "name" | "imageUrl" | "price" | "color" | "category";
   pick: (data: ExtractionSuccessData) => string | null;
 }> = [
-  { field: "name", pick: (data) => (data.name ? capitalizeFirst(data.name) : null) },
+  {
+    field: "name",
+    pick: (data) => (data.name ? capitalizeFirst(data.name) : null),
+  },
   { field: "imageUrl", pick: (data) => data.imageUrl },
   {
     field: "price",
@@ -445,7 +448,7 @@ export function ProductForm({
               )}
               {extractedDetails?.brand && (
                 <p className="text-xs text-muted-foreground">
-                  Marca: {extractedDetails.brand}
+                  Marca: {decodeHtmlEntities(extractedDetails.brand)}
                 </p>
               )}
             </div>

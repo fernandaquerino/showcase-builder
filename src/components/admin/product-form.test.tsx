@@ -42,7 +42,7 @@ function extractionData(overrides: Record<string, unknown> = {}) {
     price: "199.90",
     color: "Verde",
     category: "moda feminina-jaquetas",
-    brand: "Mindset",
+    brand: "C&amp;A",
     availableSizes: ["PP", "P", "M", "G"],
     fieldsFound: [
       "name",
@@ -138,7 +138,7 @@ describe("ProductForm", () => {
       affiliateUrl,
     );
     expect(screen.getByLabelText("Tamanho mostrado na live")).toHaveValue("");
-    expect(screen.getByText("Marca: Mindset")).toBeInTheDocument();
+    expect(screen.getByText("Marca: C&A")).toBeInTheDocument();
   });
 
   it("shows sizes only as suggestions and applies one after an explicit click", async () => {
