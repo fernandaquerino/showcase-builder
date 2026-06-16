@@ -14,7 +14,7 @@ export function ProductsEmptyState({ liveId }: { liveId: string }) {
       </div>
       <Button asChild variant="outline" className="min-h-11 sm:shrink-0">
         <Link href={`/admin/lives/${liveId}/products/new`}>
-        <Plus />
+          <Plus />
            adicionar produto
         </Link>
       </Button>

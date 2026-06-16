@@ -93,20 +93,30 @@ export default async function EditLivePage({
           </AlertDescription>
         </Alert>
       ) : null}
-
-      <Card className="mt-6">
-        <CardContent className="pt-6">
-          <ProductsSection liveId={live.id} products={products} />
-        </CardContent>
-      </Card>
-
-      <div className="mt-6">
-        <BulkProductImportPage
-          liveId={live.id}
-          allowedHosts={allowedHosts}
-          existingUrlKeys={existingUrlKeys}
-        />
-      </div>
+      {products.length > 0 ? (
+        <>
+          <Card className="mt-6">
+            <CardContent className="pt-6">
+              <ProductsSection liveId={live.id} products={products} />
+            </CardContent>
+          </Card>
+          <div className="mt-6">
+            <BulkProductImportPage
+              liveId={live.id}
+              allowedHosts={allowedHosts}
+              existingUrlKeys={existingUrlKeys}
+            />
+          </div>
+        </>
+      ) : (
+        <div className="mt-6">
+          <BulkProductImportPage
+            liveId={live.id}
+            allowedHosts={allowedHosts}
+            existingUrlKeys={existingUrlKeys}
+          />
+        </div>
+      )}
 
       <div className="mt-6">
         <CompactLiveSummaryCard
