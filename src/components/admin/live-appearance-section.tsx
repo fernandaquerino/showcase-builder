@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Monitor, RotateCcw, Save, Smartphone } from "lucide-react";
+import { RotateCcw, Save, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";

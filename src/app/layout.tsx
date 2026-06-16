@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     template: "%s | Live Showcase Builder",
   },
   description: "Crie uma vitrine simples e compartilhável para cada live.",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default function RootLayout({
