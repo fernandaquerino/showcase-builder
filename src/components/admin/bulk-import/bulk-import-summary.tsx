@@ -48,7 +48,7 @@ export function BulkImportSummary({
           disabled={saving || counts.selected === 0}
           className="min-h-11"
         >
-          Adicionar produtos prontos
+          Adicionar à vitrine
         </Button>
         {hasPending && (
           <Button

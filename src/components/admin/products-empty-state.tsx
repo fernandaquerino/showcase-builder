@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 export function ProductsEmptyState({ liveId }: { liveId: string }) {
   return (
@@ -11,9 +12,10 @@ export function ProductsEmptyState({ liveId }: { liveId: string }) {
           Cole os links acima para começar ou cadastre uma peça manualmente.
         </p>
       </div>
-      <Button asChild variant="ghost" className="min-h-11 sm:shrink-0">
+      <Button asChild variant="outline" className="min-h-11 sm:shrink-0">
         <Link href={`/admin/lives/${liveId}/products/new`}>
-          + adicionar produto
+        <Plus />
+           adicionar produto
         </Link>
       </Button>
     </div>

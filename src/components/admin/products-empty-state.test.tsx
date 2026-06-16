@@ -21,7 +21,7 @@ describe("ProductsEmptyState", () => {
     ).not.toBeInTheDocument();
 
     const singleCta = screen.getByRole("link", {
-      name: "+ adicionar produto",
+      name: "adicionar produto",
     });
     expect(singleCta).toHaveAttribute(
       "href",

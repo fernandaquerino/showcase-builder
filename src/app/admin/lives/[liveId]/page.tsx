@@ -94,6 +94,12 @@ export default async function EditLivePage({
         </Alert>
       ) : null}
 
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <ProductsSection liveId={live.id} products={products} />
+        </CardContent>
+      </Card>
+
       <div className="mt-6">
         <BulkProductImportPage
           liveId={live.id}
@@ -109,12 +115,6 @@ export default async function EditLivePage({
           initialValues={initialValues}
         />
       </div>
-
-      <Card className="mt-6">
-        <CardContent className="pt-6">
-          <ProductsSection liveId={live.id} products={products} />
-        </CardContent>
-      </Card>
 
       <Card className="mt-6 border-destructive/30">
         <CardHeader className="flex-row items-center justify-between gap-3">

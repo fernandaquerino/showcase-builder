@@ -5,6 +5,7 @@ import { ProductsEmptyState } from "@/components/admin/products-empty-state";
 import type { ProductCardData } from "@/components/admin/sortable-product-card";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@/server/db/queries/products";
+import { Plus } from "lucide-react";
 
 function toCardData(product: Product): ProductCardData {
   return {
@@ -48,9 +49,10 @@ export function ProductsSection({
         </div>
 
         {count > 0 && (
-          <Button asChild variant="ghost">
+          <Button asChild variant="outline">
             <Link href={`/admin/lives/${liveId}/products/new`}>
-              + adicionar produto
+              <Plus />
+              adicionar produto
             </Link>
           </Button>
         )}
