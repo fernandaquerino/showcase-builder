@@ -2,11 +2,11 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getDefaultLiveTheme } from "@/lib/live-theme";
-import { updateLiveThemeAction } from "@/server/actions/lives";
+import { updateAccountAppearanceAction } from "@/server/actions/account";
 import { LiveAppearanceSection } from "./live-appearance-section";
 
-vi.mock("@/server/actions/lives", () => ({
-  updateLiveThemeAction: vi.fn(),
+vi.mock("@/server/actions/account", () => ({
+  updateAccountAppearanceAction: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
@@ -21,7 +21,6 @@ describe("LiveAppearanceSection", () => {
   it("renders theme controls and live preview", () => {
     render(
       <LiveAppearanceSection
-        liveId="live-1"
         title="Live de Inverno"
         coverImageUrl={null}
         initialTheme={null}
@@ -29,7 +28,7 @@ describe("LiveAppearanceSection", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Aparência da página" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Aparência da vitrine" })).toBeInTheDocument();
     expect(screen.getByText("Clássico")).toBeInTheDocument();
     expect(screen.getByLabelText("Hexadecimal da cor principal")).toHaveValue(
       getDefaultLiveTheme().primaryColor,
@@ -40,11 +39,10 @@ describe("LiveAppearanceSection", () => {
   });
 
   it("tracks unsaved changes and saves the selected theme", async () => {
-    vi.mocked(updateLiveThemeAction).mockResolvedValue({ success: true });
+    vi.mocked(updateAccountAppearanceAction).mockResolvedValue({ success: true });
 
     render(
       <LiveAppearanceSection
-        liveId="live-1"
         title="Live de Inverno"
         coverImageUrl={null}
         initialTheme={null}
@@ -59,20 +57,18 @@ describe("LiveAppearanceSection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Salvar aparência" }));
 
     await waitFor(() => {
-      expect(updateLiveThemeAction).toHaveBeenCalledWith(
-        "live-1",
+      expect(updateAccountAppearanceAction).toHaveBeenCalledWith(
         expect.objectContaining({ preset: "fashion" }),
       );
     });
   });
 
   it("restores the default theme after confirmation", async () => {
-    vi.mocked(updateLiveThemeAction).mockResolvedValue({ success: true });
+    vi.mocked(updateAccountAppearanceAction).mockResolvedValue({ success: true });
     vi.spyOn(window, "confirm").mockReturnValue(true);
 
     render(
       <LiveAppearanceSection
-        liveId="live-1"
         title="Live de Inverno"
         coverImageUrl={null}
         initialTheme={{ ...getDefaultLiveTheme(), preset: "night" }}
@@ -83,7 +79,7 @@ describe("LiveAppearanceSection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Restaurar tema padrão" }));
 
     await waitFor(() => {
-      expect(updateLiveThemeAction).toHaveBeenCalledWith("live-1", null);
+      expect(updateAccountAppearanceAction).toHaveBeenCalledWith(null);
     });
   });
 });

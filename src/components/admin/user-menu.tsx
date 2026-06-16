@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { LogOut, Palette } from "lucide-react";
+import Link from "next/link";
 import { signOut } from "next-auth/react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -48,6 +49,12 @@ export function UserMenu({ name, email, image }: UserMenuProps) {
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="cursor-pointer gap-2">
+          <Link href="/admin/appearance">
+            <Palette className="size-4" aria-hidden="true" />
+            Aparência da vitrine
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem
           className="cursor-pointer gap-2"
           onSelect={(event) => {

@@ -9,6 +9,7 @@ const creator = {
   name: "Pam Braga",
   handle: "pambraga",
   avatarUrl: null,
+  themeConfig: null,
 };
 
 beforeEach(() => {

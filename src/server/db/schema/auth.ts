@@ -1,12 +1,15 @@
 import type { AdapterAccount } from "next-auth/adapters";
 import {
   integer,
+  jsonb,
   pgTable,
   primaryKey,
   text,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+
+import type { LiveThemeConfig } from "@/lib/live-theme";
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -15,6 +18,7 @@ export const users = pgTable("users", {
   handle: text("handle").notNull().unique(),
   image: text("avatar_url"),
   passwordHash: text("password_hash"),
+  themeConfig: jsonb("theme_config").$type<LiveThemeConfig | null>(),
   emailVerified: timestamp("email_verified", {
     withTimezone: true,
     mode: "date",

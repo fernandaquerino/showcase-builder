@@ -15,6 +15,7 @@ export type PublicCreator = {
   name: string;
   handle: string;
   avatarUrl: string | null;
+  themeConfig: LiveThemeConfig | null;
 };
 
 export type PublicLive = {
@@ -63,6 +64,7 @@ export async function getPublishedShowcaseByHandle(
       name: true,
       handle: true,
       image: true,
+      themeConfig: true,
     },
     where: eq(users.handle, handle),
   });
@@ -100,6 +102,7 @@ export async function getPublishedShowcaseByHandle(
         name: creator.name,
         handle: creator.handle,
         avatarUrl: creator.image,
+        themeConfig: creator.themeConfig,
       },
       live: null,
       products: [],
@@ -127,6 +130,7 @@ export async function getPublishedShowcaseByHandle(
       name: creator.name,
       handle: creator.handle,
       avatarUrl: creator.image,
+      themeConfig: creator.themeConfig,
     },
     live,
     products: productRows,

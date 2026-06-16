@@ -29,12 +29,11 @@ import {
   type LiveThemePresetId,
 } from "@/lib/live-theme";
 import { cn } from "@/lib/utils";
-import { updateLiveThemeAction } from "@/server/actions/lives";
+import { updateAccountAppearanceAction } from "@/server/actions/account";
 import type { Product } from "@/server/db/queries/products";
 
 type LiveAppearanceSectionProps = {
-  liveId: string;
-  title: string;
+  title?: string;
   coverImageUrl: string | null;
   initialTheme: LiveThemeConfig | null;
   products: Product[];
@@ -253,8 +252,7 @@ function ThemePreview({
 }
 
 export function LiveAppearanceSection({
-  liveId,
-  title,
+  title = "Minha vitrine",
   coverImageUrl,
   initialTheme,
   products,
@@ -295,11 +293,11 @@ export function LiveAppearanceSection({
 
   function saveTheme(nextTheme = theme) {
     startTransition(async () => {
-      const result = await updateLiveThemeAction(liveId, nextTheme);
+      const result = await updateAccountAppearanceAction(nextTheme);
       if (result.success) {
         setSavedTheme(nextTheme);
         setTheme(nextTheme);
-        toast.success("A aparência da página foi atualizada.");
+        toast.success("A aparência da vitrine foi atualizada.");
         return;
       }
 
@@ -318,7 +316,7 @@ export function LiveAppearanceSection({
 
     const defaultTheme = getDefaultLiveTheme();
     startTransition(async () => {
-      const result = await updateLiveThemeAction(liveId, null);
+      const result = await updateAccountAppearanceAction(null);
       if (result.success) {
         setTheme(defaultTheme);
         setSavedTheme(defaultTheme);
@@ -336,10 +334,10 @@ export function LiveAppearanceSection({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 id="appearance-heading" className="text-xl font-semibold">
-              Aparência da página
+              Aparência da vitrine
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Escolha como sua vitrine será exibida para suas seguidoras.
+              Escolha o visual usado em todas as suas páginas públicas.
             </p>
           </div>
           {isDirty ? (

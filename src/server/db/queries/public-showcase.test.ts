@@ -53,11 +53,17 @@ describe("getPublishedShowcaseByHandle", () => {
       name: "Pam Braga",
       handle: "pambraga",
       image: null,
+      themeConfig: null,
     });
     livesFindFirst.mockResolvedValue(null);
 
     await expect(getPublishedShowcaseByHandle("pambraga")).resolves.toEqual({
-      creator: { name: "Pam Braga", handle: "pambraga", avatarUrl: null },
+      creator: {
+        name: "Pam Braga",
+        handle: "pambraga",
+        avatarUrl: null,
+        themeConfig: null,
+      },
       live: null,
       products: [],
     });
@@ -69,6 +75,7 @@ describe("getPublishedShowcaseByHandle", () => {
       name: "Pam Braga",
       handle: "pambraga",
       image: null,
+      themeConfig: null,
     });
     livesFindFirst.mockResolvedValue(null);
 
@@ -106,6 +113,7 @@ describe("getPublishedShowcaseByHandle", () => {
       name: "Pam Braga",
       handle: "pambraga",
       image: "https://cdn.exemplo.com/avatar.jpg",
+      themeConfig: { preset: "fashion" },
     });
     livesFindFirst.mockResolvedValue(live);
     orderedProducts.mockResolvedValue(products);
@@ -117,6 +125,7 @@ describe("getPublishedShowcaseByHandle", () => {
         name: "Pam Braga",
         handle: "pambraga",
         avatarUrl: "https://cdn.exemplo.com/avatar.jpg",
+        themeConfig: { preset: "fashion" },
       },
       live,
       products,

@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { getDefaultLiveTheme } from "@/lib/live-theme";
 import { PublicLiveHero } from "./public-live-hero";
 
 vi.mock("./live-status-panel", () => ({
@@ -26,6 +27,7 @@ const creator = {
   name: "Pam Braga",
   handle: "pambraga",
   avatarUrl: "https://cdn.exemplo.com/avatar.jpg",
+  themeConfig: null,
 };
 
 const live = {
@@ -55,7 +57,14 @@ const products = [
 
 describe("PublicLiveHero", () => {
   it("renders cover, creator identity, title, date and time", () => {
-    render(<PublicLiveHero creator={creator} live={live} products={products} />);
+    render(
+      <PublicLiveHero
+        creator={creator}
+        live={live}
+        products={products}
+        theme={getDefaultLiveTheme()}
+      />,
+    );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       "Live de Inverno",
@@ -73,6 +82,7 @@ describe("PublicLiveHero", () => {
         creator={{ ...creator, avatarUrl: null }}
         live={{ ...live, coverImageUrl: null }}
         products={[]}
+        theme={getDefaultLiveTheme()}
       />,
     );
 

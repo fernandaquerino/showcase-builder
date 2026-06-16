@@ -6,7 +6,7 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { formatLiveDate, formatLiveTime } from "@/lib/format";
-import { parseLiveThemeConfig } from "@/lib/validations/live-theme";
+import type { LiveThemeConfig } from "@/lib/live-theme";
 import {
   combineLiveDateAndTime,
   getCountdownParts,
@@ -23,6 +23,7 @@ type PublicLiveHeroProps = {
   creator: PublicCreator;
   live: PublicLive | null;
   products: PublicProduct[];
+  theme: LiveThemeConfig;
 };
 
 function initials(name: string): string {
@@ -42,6 +43,7 @@ export function PublicLiveHero({
   creator,
   live,
   products,
+  theme,
 }: PublicLiveHeroProps) {
   const state = live
     ? getPublicLiveState({
@@ -59,7 +61,6 @@ export function PublicLiveHero({
     ? getCountdownParts(startsAt)
     : { days: 0, hours: 0, minutes: 0, seconds: 0 };
   const time = formatLiveTime(live?.liveTime ?? null);
-  const theme = parseLiveThemeConfig(live?.themeConfig);
   const hasCover = Boolean(live?.coverImageUrl) && theme.heroStyle !== "clean";
 
   return (

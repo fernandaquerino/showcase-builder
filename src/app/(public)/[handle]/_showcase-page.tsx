@@ -152,7 +152,9 @@ export async function PublicShowcasePageContent({
   }
 
   const shareUrl = publicUrl(normalizedHandle, showcase.live?.slug);
-  const theme = parseLiveThemeConfig(showcase.live?.themeConfig);
+  const theme = parseLiveThemeConfig(
+    showcase.creator.themeConfig ?? showcase.live?.themeConfig,
+  );
   const themeStyle = getLiveThemeCssVariables(theme) as CSSProperties;
 
   return (
@@ -171,6 +173,7 @@ export async function PublicShowcasePageContent({
         creator={showcase.creator}
         live={showcase.live}
         products={showcase.products}
+        theme={theme}
       />
 
       <div

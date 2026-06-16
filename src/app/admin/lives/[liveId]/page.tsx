@@ -6,7 +6,6 @@ import { notFound, redirect } from "next/navigation";
 import { BulkProductImportPage } from "@/components/admin/bulk-import/bulk-product-import-page";
 import { CompactLiveSummaryCard } from "@/components/admin/compact-live-summary-card";
 import { DeleteLiveDialog } from "@/components/admin/delete-live-dialog";
-import { LiveAppearanceSection } from "@/components/admin/live-appearance-section";
 import { LiveStatusBadge } from "@/components/admin/live-status-badge";
 import { ProductsSection } from "@/components/admin/products-section";
 import { PublishControl } from "@/components/admin/publish-control";
@@ -22,7 +21,6 @@ import {
 import { auth } from "@/lib/auth";
 import { getExtractionConfig } from "@/lib/env";
 import { normalizeUrlForComparison } from "@/lib/url";
-import { parseLiveThemeConfig } from "@/lib/validations/live-theme";
 import { liveIdSchema, type LiveFormValues } from "@/lib/validations/live";
 import { getLiveByIdForUser } from "@/server/db/queries/lives";
 import { getProductsByLiveIdForUser } from "@/server/db/queries/products";
@@ -70,8 +68,6 @@ export default async function EditLivePage({
     coverImageUrl: live.coverImageUrl ?? "",
   };
 
-  const themeConfig = parseLiveThemeConfig(live.themeConfig);
-
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
       <Link
@@ -113,18 +109,6 @@ export default async function EditLivePage({
           initialValues={initialValues}
         />
       </div>
-
-      <Card className="mt-6">
-        <CardContent className="pt-6">
-          <LiveAppearanceSection
-            liveId={live.id}
-            title={live.title}
-            coverImageUrl={live.coverImageUrl}
-            initialTheme={themeConfig}
-            products={products}
-          />
-        </CardContent>
-      </Card>
 
       <Card className="mt-6">
         <CardContent className="pt-6">
