@@ -128,7 +128,7 @@ export function LiveStatusPanel({
 
   return (
     <div className="space-y-5">
-      <div
+      {/* <div
         className="inline-flex min-h-10 items-center gap-2 rounded-[var(--live-radius)] bg-white/90 px-4 text-sm font-semibold text-stone-950 shadow-sm ring-1 ring-black/5"
         aria-live="polite"
       >
@@ -140,13 +140,13 @@ export function LiveStatusPanel({
           aria-hidden="true"
         />
         {stateLabel[state]}
-      </div>
+      </div> */}
 
       {state === "scheduled" && startsAt ? (
         <LiveCountdown parts={countdown} />
       ) : null}
 
-      <Button
+      {/* <Button
         asChild
         size="lg"
         className="min-h-12 rounded-[var(--live-radius)] bg-[var(--live-primary)] px-6 text-[var(--live-primary-foreground)] shadow-sm motion-safe:scroll-smooth"
@@ -155,7 +155,7 @@ export function LiveStatusPanel({
           {ctaLabel[state]}
           <ArrowDown className="size-4" aria-hidden="true" />
         </a>
-      </Button>
+      </Button> */}
     </div>
   );
 }

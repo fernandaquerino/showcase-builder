@@ -446,7 +446,7 @@ Em vez de cadastrar um produto por vez, a criadora cola **vários links de
 afiliado** e revisa cards já preenchidos.
 
 - **Entrada:** `Adicionar produtos` na seção de produtos →
-  `/admin/lives/[liveId]/products/import`. `Adicionar apenas um produto`
+  `/admin/lives/[liveId]/products/import`. `+ adicionar produto`
   continua disponível.
 - **Campo único:** um link por linha, até **20 links por vez** (com contador).
   Um helper puro (`parseProductLinks`) classifica cada linha como _válido_,
@@ -640,19 +640,19 @@ User ──< Live ──< Product
 
 ### `lives`
 
-| Campo                   | Tipo                      | Notas                                       |
-| ----------------------- | ------------------------- | ------------------------------------------- |
-| id                      | uuid (pk)                 |                                             |
-| user_id                 | uuid (fk → users)         |                                             |
-| title                   | text                      | ex.: "Live C&A · Pam Braga"                 |
-| live_date               | date                      | data da live                                |
-| live_time               | text?                     | horário, ex.: "20h"                         |
-| cover_image_url         | text?                     | imagem de capa da live                      |
-| instagram_url           | text?                     | link da live/perfil no Instagram            |
-| slug                    | text                      | único por usuário; compõe a URL pública     |
-| status                  | enum('draft','published') | default `draft`                             |
-| published_at            | timestamptz?              |                                             |
-| created_at / updated_at | timestamptz               |                                             |
+| Campo                   | Tipo                      | Notas                                   |
+| ----------------------- | ------------------------- | --------------------------------------- |
+| id                      | uuid (pk)                 |                                         |
+| user_id                 | uuid (fk → users)         |                                         |
+| title                   | text                      | ex.: "Live C&A · Pam Braga"             |
+| live_date               | date                      | data da live                            |
+| live_time               | text?                     | horário, ex.: "20h"                     |
+| cover_image_url         | text?                     | imagem de capa da live                  |
+| instagram_url           | text?                     | link da live/perfil no Instagram        |
+| slug                    | text                      | único por usuário; compõe a URL pública |
+| status                  | enum('draft','published') | default `draft`                         |
+| published_at            | timestamptz?              |                                         |
+| created_at / updated_at | timestamptz               |                                         |
 
 > Constraint sugerida: índice único `(user_id, slug)`. Regra de negócio do MVP: **apenas uma live publicada por usuário por vez** (publicar uma despublica a anterior), já que a página pública mostra "a live publicada".
 

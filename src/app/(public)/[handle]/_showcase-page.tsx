@@ -177,13 +177,13 @@ export async function PublicShowcasePageContent({
         id="conteudo"
         className="mx-auto w-full max-w-6xl space-y-10 px-5 py-8 sm:px-8 sm:py-12 lg:px-10"
       >
-        {showcase.live ? (
+        {/* {showcase.live ? (
           <LiveQuickInfo
             creator={showcase.creator}
             live={showcase.live}
             productCount={showcase.products.length}
           />
-        ) : null}
+        ) : null} */}
 
         <div className="space-y-10">
           {!showcase.live ? (

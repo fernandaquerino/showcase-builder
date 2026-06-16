@@ -50,7 +50,7 @@ export function ProductsSection({
         {count > 0 && (
           <Button asChild variant="ghost">
             <Link href={`/admin/lives/${liveId}/products/new`}>
-              Adicionar apenas um produto
+              + adicionar produto
             </Link>
           </Button>
         )}

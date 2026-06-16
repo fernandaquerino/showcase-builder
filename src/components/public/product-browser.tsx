@@ -54,7 +54,7 @@ export function ProductBrowser({ products, theme }: ProductBrowserProps) {
         </div>
       </div>
 
-      <div className="sticky top-0 z-20 -mx-5 border-y border-[var(--live-border)] bg-[color-mix(in_srgb,var(--live-background)_88%,transparent)] px-5 py-3 backdrop-blur sm:top-2 sm:mx-0 sm:rounded-[var(--live-radius)] sm:border sm:px-3">
+      {/* <div className="sticky top-0 z-20 -mx-5 border-y border-[var(--live-border)] bg-[color-mix(in_srgb,var(--live-background)_88%,transparent)] px-5 py-3 backdrop-blur sm:top-2 sm:mx-0 sm:rounded-[var(--live-radius)] sm:border sm:px-3">
         <div
           className="flex gap-2 overflow-x-auto pb-1 sm:pb-0"
           aria-label="Filtrar produtos por categoria"
@@ -82,7 +82,7 @@ export function ProductBrowser({ products, theme }: ProductBrowserProps) {
             </Button>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {visibleProducts.length === 0 ? (
         <PublicEmptyState
