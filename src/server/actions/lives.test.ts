@@ -56,7 +56,6 @@ const validInput = {
   title: "Live de Inverno",
   liveDate: "2026-06-20",
   liveTime: "20:00",
-  slug: "live-de-inverno",
 };
 
 beforeEach(() => {
@@ -204,6 +203,22 @@ describe("createLiveAction", () => {
 
     const [, payload] = vi.mocked(createLive).mock.calls[0];
     expect(payload.slug).toBe("live-de-inverno-2");
+  });
+
+  it("generates the slug from the title on the server", async () => {
+    signedIn();
+    vi.mocked(isLiveSlugAvailable).mockResolvedValue(true);
+    vi.mocked(createLive).mockResolvedValue({ id: LIVE_ID } as never);
+
+    await createLiveAction({
+      ...validInput,
+      title: "Minha Live Especial",
+      // @ts-expect-error client-supplied slug is ignored by validation
+      slug: "slug-manual",
+    });
+
+    const [, payload] = vi.mocked(createLive).mock.calls[0];
+    expect(payload.slug).toBe("minha-live-especial");
   });
 
   it("rejects when there is no session", async () => {

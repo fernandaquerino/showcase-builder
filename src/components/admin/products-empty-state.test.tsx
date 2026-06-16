@@ -4,18 +4,21 @@ import { describe, expect, it } from "vitest";
 import { ProductsEmptyState } from "./products-empty-state";
 
 describe("ProductsEmptyState", () => {
-  it("shows guidance and a CTA linking to the new product page", () => {
+  it("shows compact guidance and keeps the manual product fallback", () => {
     render(<ProductsEmptyState liveId="live-1" />);
 
     expect(
       screen.getByText("Nenhum produto adicionado ainda"),
     ).toBeInTheDocument();
 
-    const bulkCta = screen.getByRole("link", { name: "Adicionar produtos" });
-    expect(bulkCta).toHaveAttribute(
-      "href",
-      "/admin/lives/live-1/products/import",
-    );
+    expect(
+      screen.getByText(
+        "Cole os links acima para começar ou cadastre uma peça manualmente.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Adicionar produtos" }),
+    ).not.toBeInTheDocument();
 
     const singleCta = screen.getByRole("link", {
       name: "Adicionar apenas um produto",

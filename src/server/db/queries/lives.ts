@@ -54,7 +54,7 @@ export async function isLiveSlugAvailable(
 
 export async function createLive(
   userId: string,
-  input: LiveFormData,
+  input: LiveFormData & { slug: string },
 ): Promise<Live> {
   const [live] = await db
     .insert(lives)

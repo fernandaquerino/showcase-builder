@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { slugify } from "@/lib/slug";
 import { isSafeHttpUrl } from "@/lib/url";
 
 function isValidCalendarDate(value: string): boolean {
@@ -21,25 +20,6 @@ const optionalUrl = (message: string) =>
     .optional()
     .transform((value) => (!value || value === "" ? null : value))
     .refine((value) => value === null || isSafeHttpUrl(value), message);
-
-function isInstagramUrl(value: string): boolean {
-  if (!isSafeHttpUrl(value)) {
-    return false;
-  }
-
-  const { hostname } = new URL(value);
-  return hostname === "instagram.com" || hostname.endsWith(".instagram.com");
-}
-
-const optionalInstagramUrl = z
-  .string()
-  .trim()
-  .optional()
-  .transform((value) => (!value || value === "" ? null : value))
-  .refine(
-    (value) => value === null || isInstagramUrl(value),
-    "Cole um link do Instagram válido (http/https).",
-  );
 
 const titleSchema = z
   .string()
@@ -62,26 +42,11 @@ const liveTimeSchema = z
   )
   .transform((value) => (value === "" ? null : value));
 
-const slugSchema = z
-  .string()
-  .trim()
-  .min(1, "Informe o endereço da live.")
-  .transform(slugify)
-  .pipe(
-    z
-      .string()
-      .min(3, "O endereço deve ter pelo menos 3 caracteres.")
-      .max(80, "O endereço deve ter no máximo 80 caracteres.")
-      .regex(/^[a-z0-9-]+$/, "Use apenas letras minúsculas, números e hífen."),
-  );
-
 export const liveInputSchema = z.object({
   title: titleSchema,
   liveDate: liveDateSchema,
   liveTime: liveTimeSchema,
   coverImageUrl: optionalUrl("Cole um link de imagem válido (http/https)."),
-  instagramUrl: optionalInstagramUrl,
-  slug: slugSchema,
 });
 
 export const liveIdSchema = z.uuid("Identificador inválido.");

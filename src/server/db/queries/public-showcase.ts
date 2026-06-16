@@ -23,7 +23,6 @@ export type PublicLive = {
   liveDate: string;
   liveTime: string | null;
   coverImageUrl: string | null;
-  instagramUrl: string | null;
   themeConfig: LiveThemeConfig | null;
   slug: string;
   publishedAt: Date | null;
@@ -79,7 +78,6 @@ export async function getPublishedShowcaseByHandle(
       liveDate: true,
       liveTime: true,
       coverImageUrl: true,
-      instagramUrl: true,
       themeConfig: true,
       slug: true,
       publishedAt: true,

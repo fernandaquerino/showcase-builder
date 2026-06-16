@@ -1,4 +1,3 @@
-import { Plus } from "lucide-react";
 import Link from "next/link";
 
 import { ProductList } from "@/components/admin/product-list";
@@ -49,19 +48,11 @@ export function ProductsSection({
         </div>
 
         {count > 0 && (
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button asChild>
-              <Link href={`/admin/lives/${liveId}/products/import`}>
-                <Plus className="size-4" aria-hidden="true" />
-                Adicionar produtos
-              </Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link href={`/admin/lives/${liveId}/products/new`}>
-                Adicionar apenas um produto
-              </Link>
-            </Button>
-          </div>
+          <Button asChild variant="ghost">
+            <Link href={`/admin/lives/${liveId}/products/new`}>
+              Adicionar apenas um produto
+            </Link>
+          </Button>
         )}
       </div>
 

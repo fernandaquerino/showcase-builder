@@ -34,7 +34,6 @@ const live = {
   liveDate: "2026-06-20",
   liveTime: "20:00",
   coverImageUrl: "https://cdn.exemplo.com/capa.jpg",
-  instagramUrl: "https://instagram.com/pambraga",
   themeConfig: null,
   slug: "live-de-inverno",
   publishedAt: new Date("2026-06-15T10:00:00.000Z"),
@@ -55,7 +54,7 @@ const products = [
 ];
 
 describe("PublicLiveHero", () => {
-  it("renders cover, creator identity, title, date, time and Instagram CTA", () => {
+  it("renders cover, creator identity, title, date and time", () => {
     render(<PublicLiveHero creator={creator} live={live} products={products} />);
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
@@ -66,25 +65,18 @@ describe("PublicLiveHero", () => {
     expect(screen.getByText("20:00")).toBeInTheDocument();
     expect(screen.getByText("1 produto selecionado")).toBeInTheDocument();
     expect(screen.getByTestId("status-panel")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ver no Instagram" })).toHaveAttribute(
-      "href",
-      "https://instagram.com/pambraga",
-    );
   });
 
   it("renders an elegant fallback without a cover image", () => {
     render(
       <PublicLiveHero
         creator={{ ...creator, avatarUrl: null }}
-        live={{ ...live, coverImageUrl: null, instagramUrl: null }}
+        live={{ ...live, coverImageUrl: null }}
         products={[]}
       />,
     );
 
     expect(screen.getByText("PB")).toBeInTheDocument();
     expect(screen.getByText("0 produtos selecionados")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "Ver no Instagram" }),
-    ).not.toBeInTheDocument();
   });
 });

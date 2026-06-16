@@ -3,12 +3,14 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { BulkProductImportPage } from "@/components/admin/bulk-import/bulk-product-import-page";
+import { CompactLiveSummaryCard } from "@/components/admin/compact-live-summary-card";
 import { DeleteLiveDialog } from "@/components/admin/delete-live-dialog";
 import { LiveAppearanceSection } from "@/components/admin/live-appearance-section";
-import { LiveForm } from "@/components/admin/live-form";
 import { LiveStatusBadge } from "@/components/admin/live-status-badge";
 import { ProductsSection } from "@/components/admin/products-section";
 import { PublishControl } from "@/components/admin/publish-control";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +20,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { getExtractionConfig } from "@/lib/env";
+import { normalizeUrlForComparison } from "@/lib/url";
 import { parseLiveThemeConfig } from "@/lib/validations/live-theme";
 import { liveIdSchema, type LiveFormValues } from "@/lib/validations/live";
 import { getLiveByIdForUser } from "@/server/db/queries/lives";
@@ -29,8 +33,10 @@ export const metadata: Metadata = {
 
 export default async function EditLivePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ liveId: string }>;
+  searchParams: Promise<{ created?: string }>;
 }) {
   const session = await auth();
 
@@ -51,14 +57,17 @@ export default async function EditLivePage({
   }
 
   const products = await getProductsByLiveIdForUser(live.id, session.user.id);
+  const created = (await searchParams).created === "1";
+  const existingUrlKeys = products
+    .map((product) => normalizeUrlForComparison(product.productUrl))
+    .filter((key): key is string => key !== null);
+  const allowedHosts = Array.from(getExtractionConfig().allowedHosts);
 
   const initialValues: LiveFormValues = {
     title: live.title,
     liveDate: live.liveDate,
     liveTime: live.liveTime ?? "",
     coverImageUrl: live.coverImageUrl ?? "",
-    instagramUrl: live.instagramUrl ?? "",
-    slug: live.slug,
   };
 
   const themeConfig = parseLiveThemeConfig(live.themeConfig);
@@ -81,16 +90,29 @@ export default async function EditLivePage({
         <PublishControl liveId={live.id} status={live.status} />
       </div>
 
-      <Card className="mt-6">
-        <CardContent className="pt-6">
-          <LiveForm
-            mode="edit"
-            handle={session.user.handle}
-            liveId={live.id}
-            initialValues={initialValues}
-          />
-        </CardContent>
-      </Card>
+      {created ? (
+        <Alert className="mt-6">
+          <AlertDescription>
+            Live criada. Agora adicione os produtos que serão mostrados.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      <div className="mt-6">
+        <BulkProductImportPage
+          liveId={live.id}
+          allowedHosts={allowedHosts}
+          existingUrlKeys={existingUrlKeys}
+        />
+      </div>
+
+      <div className="mt-6">
+        <CompactLiveSummaryCard
+          live={live}
+          productCount={products.length}
+          initialValues={initialValues}
+        />
+      </div>
 
       <Card className="mt-6">
         <CardContent className="pt-6">

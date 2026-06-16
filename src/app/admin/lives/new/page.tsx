@@ -25,7 +25,7 @@ export default async function NewLivePage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-5 py-10 sm:px-8 sm:py-14">
+    <main className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8 sm:py-14">
       <Link
         href="/admin"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -42,7 +42,7 @@ export default async function NewLivePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LiveForm mode="create" handle={session.user.handle} />
+          <LiveForm mode="create" />
         </CardContent>
       </Card>
     </main>

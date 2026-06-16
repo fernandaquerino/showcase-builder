@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 export type BulkImportSelectionBarProps = {
   selected: number;
   ready: number;
+  disabled?: boolean;
   onSelectAllReady: () => void;
   onClearSelection: () => void;
 };
@@ -12,6 +13,7 @@ export type BulkImportSelectionBarProps = {
 export function BulkImportSelectionBar({
   selected,
   ready,
+  disabled = false,
   onSelectAllReady,
   onClearSelection,
 }: BulkImportSelectionBarProps) {
@@ -26,7 +28,7 @@ export function BulkImportSelectionBar({
           variant="ghost"
           size="sm"
           onClick={onSelectAllReady}
-          disabled={ready === 0 || selected === ready}
+          disabled={disabled || ready === 0 || selected === ready}
           className="min-h-11"
         >
           Selecionar todos os prontos
@@ -36,7 +38,7 @@ export function BulkImportSelectionBar({
           variant="ghost"
           size="sm"
           onClick={onClearSelection}
-          disabled={selected === 0}
+          disabled={disabled || selected === 0}
           className="min-h-11"
         >
           Limpar seleção

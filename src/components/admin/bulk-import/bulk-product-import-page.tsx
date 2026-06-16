@@ -176,7 +176,10 @@ export function BulkProductImportPage({
         `${result.count} ${result.count === 1 ? "produto foi adicionado" : "produtos foram adicionados"} à live.`,
       );
       clearPersistedImport(liveId);
-      router.push(`/admin/lives/${liveId}`);
+      dispatch({ type: "reset" });
+      setPhase("input");
+      setLinksText("");
+      setResumeItems(null);
       router.refresh();
       return;
     }
@@ -274,6 +277,7 @@ export function BulkProductImportPage({
         <BulkImportSelectionBar
           selected={counts.selected}
           ready={counts.ready}
+          disabled={isSaving}
           onSelectAllReady={() => dispatch({ type: "selectAllReady" })}
           onClearSelection={() => dispatch({ type: "clearSelection" })}
         />

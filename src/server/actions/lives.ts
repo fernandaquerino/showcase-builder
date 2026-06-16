@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
 import { revalidatePublicShowcase } from "@/server/cache/showcase";
-import { appendSuffix } from "@/lib/slug";
+import { appendSuffix, slugify } from "@/lib/slug";
 import {
   liveIdSchema,
   liveInputSchema,
@@ -84,7 +84,6 @@ async function resolveUniqueSlug(
 const slugTaken: ActionResult = {
   success: false,
   message: "Este endereço já está sendo usado por outra live.",
-  fieldErrors: { slug: ["Escolha outro endereço para a live."] },
 };
 
 export async function createLiveAction(
@@ -107,7 +106,7 @@ export async function createLiveAction(
   }
 
   try {
-    const slug = await resolveUniqueSlug(userId, parsed.data.slug);
+    const slug = await resolveUniqueSlug(userId, slugify(parsed.data.title));
 
     if (!slug) {
       return slugTaken;
@@ -159,20 +158,7 @@ export async function updateLiveAction(
     const contextBefore = await getPublishedLiveContextById(parsedId.data);
     const liveBefore = await getLiveByIdForUser(parsedId.data, userId);
     const previousCover = liveBefore?.coverImageUrl ?? null;
-    const slug = await resolveUniqueSlug(
-      userId,
-      parsed.data.slug,
-      parsedId.data,
-    );
-
-    if (!slug) {
-      return slugTaken;
-    }
-
-    const live = await updateLive(parsedId.data, userId, {
-      ...parsed.data,
-      slug,
-    });
+    const live = await updateLive(parsedId.data, userId, parsed.data);
 
     if (!live) {
       return { success: false, message: NOT_FOUND };

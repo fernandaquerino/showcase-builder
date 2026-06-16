@@ -1,12 +1,10 @@
-import { CalendarDays, Clock, ExternalLink, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { CalendarDays, Clock, Sparkles } from "lucide-react";
 
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { formatLiveDate, formatLiveTime } from "@/lib/format";
 import { parseLiveThemeConfig } from "@/lib/validations/live-theme";
 import {
@@ -143,23 +141,6 @@ export function PublicLiveHero({
             startsAtIso={startsAt?.toISOString() ?? null}
             initialCountdown={initialCountdown}
           />
-
-          {live?.instagramUrl ? (
-            <Button
-              asChild
-              variant="outline"
-              className="min-h-11 rounded-[var(--live-radius)] border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-            >
-              <Link
-                href={live.instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="size-4" aria-hidden="true" />
-                Ver no Instagram
-              </Link>
-            </Button>
-          ) : null}
         </div>
       </div>
     </header>

@@ -84,7 +84,6 @@ describe("getPublishedShowcaseByHandle", () => {
       liveDate: "2026-06-20",
       liveTime: "20:00",
       coverImageUrl: "https://cdn.exemplo.com/live.jpg",
-      instagramUrl: "https://www.instagram.com/pam",
       slug: "live-ca",
       publishedAt: new Date("2026-06-20T20:00:00Z"),
     };

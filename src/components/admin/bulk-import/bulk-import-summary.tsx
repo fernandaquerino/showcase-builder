@@ -19,15 +19,20 @@ export function BulkImportSummary({
   onCancel,
 }: BulkImportSummaryProps) {
   const hasPending = counts.needsReview > 0 || counts.failed > 0;
+  const readyLabel = saving
+    ? "Salvando produtos..."
+    : `${counts.ready} ${counts.ready === 1 ? "pronto" : "prontos"}`;
 
   return (
     <div className="space-y-4 rounded-xl border bg-card p-4">
       <div>
         <h2 className="text-lg font-semibold">
-          {counts.total} {counts.total === 1 ? "produto na importação" : "produtos na importação"}
+          {saving
+            ? "Adicionando produtos à live"
+            : `${counts.total} ${counts.total === 1 ? "produto na importação" : "produtos na importação"}`}
         </h2>
         <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          <li>{counts.ready} prontos</li>
+          <li aria-live="polite">{readyLabel}</li>
           {counts.needsReview > 0 && <li>{counts.needsReview} precisam de revisão</li>}
           {counts.failed > 0 && <li>{counts.failed} não foram encontrados</li>}
           {counts.duplicates > 0 && <li>{counts.duplicates} já na live</li>}
@@ -40,7 +45,7 @@ export function BulkImportSummary({
           onClick={onAddReady}
           loading={saving}
           loadingText="Adicionando..."
-          disabled={counts.selected === 0}
+          disabled={saving || counts.selected === 0}
           className="min-h-11"
         >
           Adicionar produtos prontos
