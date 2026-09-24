@@ -59,7 +59,6 @@ export function PublishControl({
       }
 
       toast.success("Live despublicada.");
-      setOpen(false);
       router.refresh();
     });
   }

@@ -266,8 +266,14 @@ export function LiveAppearanceSection({
   const [device, setDevice] = useState<PreviewDevice>("mobile");
   const [isPending, startTransition] = useTransition();
 
-  const contrast = useMemo(() => validateThemeContrast(theme), [theme]);
-  const isDirty = JSON.stringify(theme) !== JSON.stringify(savedTheme);
+  const contrast = useMemo(
+    () => validateThemeContrast(savedTheme),
+    [savedTheme],
+  );
+  const isDirty =
+    theme.preset !== savedTheme.preset ||
+    theme.primaryColor !== savedTheme.primaryColor ||
+    theme.backgroundColor !== savedTheme.backgroundColor;
 
   useEffect(() => {
     if (!isDirty) {
@@ -280,7 +286,6 @@ export function LiveAppearanceSection({
     };
 
     window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
 
   function updateTheme(next: Partial<LiveThemeConfig>) {
@@ -319,7 +324,6 @@ export function LiveAppearanceSection({
       const result = await updateAccountAppearanceAction(null);
       if (result.success) {
         setTheme(defaultTheme);
-        setSavedTheme(defaultTheme);
         toast.success("Tema padrão restaurado.");
         return;
       }
@@ -359,10 +363,10 @@ export function LiveAppearanceSection({
                   <button
                     key={presetId}
                     type="button"
-                    aria-pressed={theme.preset === presetId}
+                    aria-pressed={savedTheme.preset === presetId}
                     className={cn(
                       "min-h-24 rounded-xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
-                      theme.preset === presetId
+                      savedTheme.preset === presetId
                         ? "border-primary bg-primary/10"
                         : "border-border bg-card hover:border-primary/40",
                     )}

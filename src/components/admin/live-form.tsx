@@ -117,9 +117,9 @@ export function LiveForm({
       }
 
       const result = await updateLiveAction(liveId, values);
+      onSaved?.();
       if (applyResult(result)) {
         toast.success("Alterações salvas.");
-        onSaved?.();
         router.refresh();
       }
     });

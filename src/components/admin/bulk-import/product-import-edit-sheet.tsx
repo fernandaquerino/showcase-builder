@@ -41,8 +41,7 @@ function draftFromItem(item: ImportProductItem): Draft {
     category: item.category,
     size: item.size ?? "",
     color: item.color ?? "",
-    // Show the canonical decimal ("129.90") as BR input ("129,90").
-    price: item.price ? item.price.replace(".", ",") : "",
+    price: item.price ?? "",
     imageUrl: item.imageUrl,
   };
 }
@@ -63,10 +62,10 @@ export function ProductImportEditSheet({
       imageUrl: "",
     },
   );
-  // Reset the draft when a different item opens the sheet (React's recommended
+  // Initialize the draft once an item opens the sheet (React's recommended
   // "adjust state during render" pattern — no effect needed).
   const [trackedId, setTrackedId] = useState<string | null>(item?.id ?? null);
-  if (item && item.id !== trackedId) {
+  if (item && trackedId === null) {
     setTrackedId(item.id);
     setDraft(draftFromItem(item));
   }
@@ -86,13 +85,12 @@ export function ProductImportEditSheet({
     if (!item) {
       return;
     }
-    // Keep item.price as a canonical decimal. Parse the BR input back; on
-    // invalid input keep the previous value so a typo never wipes a good price.
+    // Keep item.price as a canonical decimal. Parse the BR input back.
     const parsedPrice = parseBrlPrice(draft.price);
     const price =
       parsedPrice.kind === "valid"
         ? parsedPrice.value
-        : parsedPrice.kind === "empty"
+        : parsedPrice.kind === "invalid"
           ? null
           : item.price;
 
@@ -104,7 +102,6 @@ export function ProductImportEditSheet({
       price,
       imageUrl: draft.imageUrl,
     });
-    onOpenChange(false);
   }
 
   return (

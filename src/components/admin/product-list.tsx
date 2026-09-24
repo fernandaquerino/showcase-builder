@@ -2,7 +2,6 @@
 
 import {
   DndContext,
-  KeyboardSensor,
   PointerSensor,
   closestCenter,
   useSensor,
@@ -12,7 +11,6 @@ import {
 import {
   SortableContext,
   arrayMove,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -53,18 +51,14 @@ export function ProductList({
   const propsSignature = signature(products);
   const lastSignature = useRef(propsSignature);
   useEffect(() => {
-    if (lastSignature.current !== propsSignature) {
+    if (status.kind === "idle" && lastSignature.current !== propsSignature) {
       lastSignature.current = propsSignature;
       setItems(products);
-      setStatus({ kind: "idle" });
     }
-  }, [propsSignature, products]);
+  }, [propsSignature, products, status.kind]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
   );
 
   function persist(nextItems: ProductCardData[], previous: ProductCardData[]) {
@@ -110,7 +104,6 @@ export function ProductList({
       return;
     }
 
-    const previous = items;
     const nextItems = arrayMove(items, index, target);
     setItems(nextItems);
     setStatus({ kind: "saving" });
@@ -122,7 +115,6 @@ export function ProductList({
           : await moveProductDownAction(liveId, productId);
 
       if (!result.success) {
-        setItems(previous);
         setStatus({ kind: "error", message: result.message });
         return;
       }
@@ -147,9 +139,9 @@ export function ProductList({
       </p>
 
       <DndContext
-        id={`products-${liveId}`}
         sensors={sensors}
         collisionDetection={closestCenter}
+        autoScroll={false}
         onDragEnd={handleDragEnd}
       >
         <SortableContext

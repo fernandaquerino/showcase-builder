@@ -23,6 +23,7 @@ export function EditLiveDetailsSheet({
   initialValues: LiveFormValues;
 }) {
   const [open, setOpen] = useState(false);
+  const [formValues] = useState(initialValues);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -42,7 +43,7 @@ export function EditLiveDetailsSheet({
         <LiveForm
           mode="edit"
           liveId={liveId}
-          initialValues={initialValues}
+          initialValues={formValues}
           onSaved={() => setOpen(false)}
         />
       </SheetContent>

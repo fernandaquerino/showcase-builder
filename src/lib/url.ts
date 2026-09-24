@@ -18,9 +18,7 @@ export function isSafeHttpUrl(value: string): boolean {
 /**
  * Builds a stable key for comparing two URLs for equality (exact-duplicate and
  * "already in the live" checks). Scheme and host are lowercased and a trailing
- * slash is dropped, but the query string is preserved — affiliate UTMs are part
- * of what makes two links the same product link, and must never be stripped
- * from the URL that gets saved.
+ * slash is dropped. The URL that gets saved is never modified.
  */
 export function normalizeUrlForComparison(value: string): string | null {
   let url: URL;
@@ -38,5 +36,5 @@ export function normalizeUrlForComparison(value: string): string | null {
     ? url.pathname.slice(0, -1)
     : url.pathname;
 
-  return `${url.protocol}//${url.hostname.toLowerCase()}${path}${url.search}`;
+  return `${url.protocol}//${url.hostname.toLowerCase()}${path}`;
 }

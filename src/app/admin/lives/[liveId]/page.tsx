@@ -138,7 +138,6 @@ export default async function EditLivePage({
             liveId={live.id}
             title={live.title}
             status={live.status}
-            redirectToAdmin
             trigger={
               <Button variant="destructive" size="sm">
                 Excluir

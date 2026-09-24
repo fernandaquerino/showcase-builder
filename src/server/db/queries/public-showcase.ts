@@ -123,7 +123,7 @@ export async function getPublishedShowcaseByHandle(
     })
     .from(products)
     .where(eq(products.liveId, live.id))
-    .orderBy(asc(products.position));
+    .orderBy(asc(products.createdAt));
 
   return {
     creator: {
@@ -143,7 +143,7 @@ export function getCachedPublishedShowcaseByHandle(
 ): Promise<PublicShowcase | null> {
   return unstable_cache(
     () => getPublishedShowcaseByHandle(handle, slug),
-    [`published-showcase:${handle}:${slug ?? "current"}`],
+    [`published-showcase:${handle}`],
     {
       revalidate: SHOWCASE_REVALIDATE_SECONDS,
       tags: [showcaseTag(handle)],

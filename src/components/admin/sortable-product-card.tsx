@@ -58,8 +58,8 @@ export function SortableProductCard({
 
   const price = formatBrlPrice(product.price);
   const details = [product.size, product.color].filter(Boolean).join(" · ");
-  const canMoveUp = position > 1;
-  const canMoveDown = position < total;
+  const canMoveUp = position > 0;
+  const canMoveDown = position < total - 1;
 
   return (
     <li
@@ -73,7 +73,7 @@ export function SortableProductCard({
       <button
         ref={setActivatorNodeRef}
         type="button"
-        className="flex size-11 shrink-0 cursor-grab touch-none select-none items-center justify-center rounded-lg text-muted-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 active:cursor-grabbing"
+        className="flex size-11 shrink-0 cursor-grab select-none items-center justify-center rounded-lg text-muted-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 active:cursor-grabbing"
         aria-label={`Reordenar ${product.name}. Use espaço para começar a mover e as setas para alterar a posição.`}
         {...attributes}
         {...listeners}

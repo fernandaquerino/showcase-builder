@@ -45,7 +45,7 @@ export function BulkImportSummary({
           onClick={onAddReady}
           loading={saving}
           loadingText="Adicionando..."
-          disabled={saving || counts.selected === 0}
+          disabled={saving || counts.ready === 0}
           className="min-h-11"
         >
           Adicionar à vitrine

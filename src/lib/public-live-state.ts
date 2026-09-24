@@ -98,7 +98,7 @@ export function combineLiveDateAndTime({
   );
   const offset = getTimeZoneOffsetMs(utcGuess, timeZone);
 
-  return new Date(utcGuess.getTime() - offset);
+  return new Date(utcGuess.getTime() + offset);
 }
 
 export function getPublicLiveState(
@@ -135,7 +135,7 @@ export function getCountdownParts(
   );
 
   const days = Math.floor(diffSeconds / 86_400);
-  const hours = Math.floor((diffSeconds % 86_400) / 3_600);
+  const hours = Math.floor(diffSeconds / 3_600);
   const minutes = Math.floor((diffSeconds % 3_600) / 60);
   const seconds = diffSeconds % 60;
 

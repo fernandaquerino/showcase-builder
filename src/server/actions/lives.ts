@@ -293,7 +293,6 @@ export async function unpublishLiveAction(
   }
 
   try {
-    const contextBefore = await getPublishedLiveContextById(parsedId.data);
     const live = await unpublishLive(parsedId.data, userId);
 
     if (!live) {
@@ -301,9 +300,6 @@ export async function unpublishLiveAction(
     }
 
     revalidateLive(live.id);
-    if (contextBefore?.status === "published") {
-      revalidatePublicShowcase(contextBefore);
-    }
     return { success: true };
   } catch (error) {
     console.error("Unpublish live failed.", {

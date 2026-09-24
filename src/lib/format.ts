@@ -29,13 +29,9 @@ const UPDATED_AT_FORMATTER = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "2-digit",
   year: "numeric",
-  timeZone: "America/Sao_Paulo",
 });
 
-/**
- * Formats an absolute timestamp (e.g. `updated_at`) in Brazilian format using a
- * fixed timezone so the server and client render the same string.
- */
+/** Formats an absolute timestamp (e.g. `updated_at`) in Brazilian format. */
 export function formatTimestamp(value: Date): string {
   return UPDATED_AT_FORMATTER.format(value);
 }

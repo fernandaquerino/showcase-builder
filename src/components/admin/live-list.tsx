@@ -17,7 +17,7 @@ function getPublicLiveUrl(handle: string, slug: string): string {
 function LiveListItem({ handle, live }: { handle: string; live: Live }) {
   const time = formatLiveTime(live.liveTime);
   const publicUrl =
-    live.status === "published" ? getPublicLiveUrl(handle, live.slug) : null;
+    live.status === "published" ? getPublicLiveUrl(handle, live.id) : null;
 
   return (
     <Card className="flex flex-col gap-4 p-5">

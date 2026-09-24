@@ -104,8 +104,8 @@ export function ProductForm({
   const { errors } = formState;
 
   /**
-   * Fills only empty, untouched fields from an extraction result, preserving
-   * anything the creator already typed (tracked via RHF dirty state). The
+   * Fills fields from an extraction result, preserving anything the creator
+   * already typed (tracked via RHF dirty state). The
    * affiliate link the creator pasted is kept as the buy link and stored as the
    * extraction origin. Never saves or changes the product position.
    */
@@ -122,11 +122,11 @@ export function ProductForm({
       const current = (getValues(field) ?? "").trim();
       const isDirty = getFieldState(field, formState).isDirty;
 
-      if (current === "" && !isDirty) {
+      if (current === "" || !isDirty) {
         setValue(field, value, { shouldDirty: false, shouldValidate: false });
-        filled += 1;
-      } else {
         preserved += 1;
+      } else {
+        filled += 1;
       }
     }
 
@@ -139,7 +139,7 @@ export function ProductForm({
       setValue("productUrl", data.affiliateUrl, { shouldValidate: true });
     }
 
-    setExtractedDetails(data);
+    setExtractedDetails((current) => current ?? data);
     return { filled, preserved };
   }
 
@@ -148,7 +148,7 @@ export function ProductForm({
 
     if (!getFieldState("productUrl", formState).isDirty) {
       setValue("productUrl", url, {
-        shouldDirty: false,
+        shouldDirty: url !== "",
         shouldValidate: false,
       });
     }
@@ -197,7 +197,7 @@ export function ProductForm({
       const result = await updateProductAction(liveId, productId, values);
       if (applyResult(result)) {
         toast.success("Produto atualizado.");
-        router.push(`/admin/lives/${liveId}`);
+        router.back();
       }
     });
   }
@@ -256,7 +256,7 @@ export function ProductForm({
                 }
                 {...register("category")}
               />
-              <datalist id={categoryListId}>
+              <datalist id="category-suggestions">
                 {categorySuggestions.map((category) => (
                   <option key={category} value={category} />
                 ))}

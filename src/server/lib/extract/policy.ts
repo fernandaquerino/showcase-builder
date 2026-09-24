@@ -51,5 +51,5 @@ export function retryAfterSeconds(
 }
 
 export function isWithinLimit(count: number, limit: number): boolean {
-  return count <= limit;
+  return count < limit;
 }

@@ -44,14 +44,13 @@ export function ShareShowcase({ url, creator }: ShareShowcaseProps) {
     try {
       if (!navigator.share) {
         await copyLink();
-        return;
+      } else {
+        await navigator.share({
+          title: "Vitrine da live",
+          text: "Olha os produtos desta live.",
+          url,
+        });
       }
-
-      await navigator.share({
-        title: "Vitrine da live",
-        text: "Olha os produtos desta live.",
-        url,
-      });
       setCopyState("idle");
     } catch {
       setCopyState("error");

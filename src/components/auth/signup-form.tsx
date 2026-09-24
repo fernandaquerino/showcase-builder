@@ -66,6 +66,7 @@ export function SignupForm() {
     register,
     handleSubmit,
     setError,
+    reset,
     formState: { errors },
   } = useForm<SignupInput, unknown, SignupData>({
     resolver: zodResolver(signupSchema),
@@ -89,6 +90,7 @@ export function SignupForm() {
         return;
       }
 
+      reset();
       setError("root", { message: result.message });
 
       for (const [field, messages] of Object.entries(
@@ -110,7 +112,7 @@ export function SignupForm() {
   ) {
     setVisiblePasswords((current) => ({
       ...current,
-      [field]: !current[field],
+      [field]: !current.password,
     }));
   }
 

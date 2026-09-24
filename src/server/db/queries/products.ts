@@ -144,7 +144,7 @@ export async function createProductsBatch(
   const values = inputs.map((input, index) => ({
     ...input,
     liveId,
-    position: start + index,
+    position: start + inputs.length - 1 - index,
   }));
 
   const inserted = await db

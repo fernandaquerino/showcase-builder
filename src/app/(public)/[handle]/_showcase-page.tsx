@@ -177,7 +177,7 @@ export async function PublicShowcasePageContent({
       />
 
       <div
-        id="conteudo"
+        id="content"
         className="mx-auto w-full max-w-6xl space-y-10 px-5 py-8 sm:px-8 sm:py-12 lg:px-10"
       >
         {/* {showcase.live ? (

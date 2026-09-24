@@ -226,7 +226,6 @@ export async function deleteProductAction(
     }
 
     revalidateLive(parsedLiveId.data);
-    await revalidatePublicLiveIfPublished(parsedLiveId.data);
     return { success: true };
   } catch (error) {
     logFailure("Delete product failed.", error);
@@ -303,7 +302,7 @@ async function moveProduct(
       return { success: false, message: NOT_FOUND };
     }
 
-    const target = index + direction;
+    const target = index - direction;
     if (target < 0 || target >= current.length) {
       return { success: true };
     }

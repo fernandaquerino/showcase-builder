@@ -4,14 +4,12 @@ const SLUG_FALLBACK = "live";
 /**
  * Builds a URL-safe slug from arbitrary text.
  *
- * Lowercases, strips accents, replaces separators with hyphens, removes invalid
- * characters, collapses duplicate hyphens and trims leading/trailing hyphens.
- * Falls back to a safe base when the result would be empty.
+ * Lowercases, replaces separators with hyphens, removes invalid characters,
+ * collapses duplicate hyphens and trims leading/trailing hyphens. Falls back to
+ * a safe base when the result would be empty.
  */
 export function slugify(value: string): string {
   const slug = value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
