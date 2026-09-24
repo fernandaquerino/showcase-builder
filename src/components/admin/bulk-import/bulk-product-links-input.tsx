@@ -54,7 +54,7 @@ export function BulkProductLinksInput({
   const fetchable = parsed.filter(
     (link) => link.status === "valid" || link.status === "already-added",
   );
-  const overLimit = fetchable.length > MAX_IMPORT_LINKS;
+  const overLimit = fetchable.length >= MAX_IMPORT_LINKS;
   const problems = parsed.filter(
     (link) => link.status !== "valid" && link.status !== "already-added",
   );
@@ -98,7 +98,7 @@ export function BulkProductLinksInput({
       {problems.length > 0 && (
         <ul className="space-y-1 text-sm" aria-label="Links que serão ignorados">
           {problems.map((link) => (
-            <li key={`${link.originalIndex}-${link.affiliateUrl}`} className="flex gap-2">
+            <li key={link.affiliateUrl} className="flex gap-2">
               <span className={`shrink-0 font-medium ${STATUS_STYLES[link.status]}`}>
                 {PARSED_LINK_LABELS[link.status]}:
               </span>

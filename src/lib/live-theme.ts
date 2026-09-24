@@ -264,7 +264,7 @@ export function getLiveThemeCssVariables(
       ? "#FFFFFF"
       : theme.textMode === "dark"
         ? "#111111"
-        : getReadableForeground(theme.backgroundColor);
+        : getReadableForeground(theme.primaryColor);
   const card =
     foreground === "#FFFFFF"
       ? shadeColor(theme.backgroundColor, 14)

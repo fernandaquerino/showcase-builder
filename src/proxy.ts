@@ -6,7 +6,7 @@ export const proxy = auth((request) => {
   if (!request.auth) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set(
-      "callbackUrl",
+      "redirectTo",
       `${request.nextUrl.pathname}${request.nextUrl.search}`,
     );
     return NextResponse.redirect(loginUrl);

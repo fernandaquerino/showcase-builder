@@ -48,10 +48,7 @@ export function parseProductLinks(
   const existing = new Set(existingUrlKeys);
   const seen = new Set<string>();
 
-  const lines = input
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+  const lines = input.split("\n").map((line) => line.trim());
 
   return lines.map((affiliateUrl, originalIndex) => {
     const base = { originalIndex, affiliateUrl, hostname: hostnameOf(affiliateUrl) };

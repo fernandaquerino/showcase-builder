@@ -98,8 +98,9 @@ export function LiveStatusPanel({
     [startsAtIso],
   );
   const [state, setState] = useState(initialState);
-  const [countdown, setCountdown] =
-    useState<CountdownParts>(initialCountdown);
+  const [countdown, setCountdown] = useState<CountdownParts>(() =>
+    startsAt ? getCountdownParts(startsAt) : initialCountdown,
+  );
 
   useEffect(() => {
     if (!startsAt || (state !== "scheduled" && state !== "live")) {
@@ -121,7 +122,7 @@ export function LiveStatusPanel({
     }
 
     update();
-    const interval = window.setInterval(update, state === "scheduled" ? 1000 : 60_000);
+    const interval = window.setInterval(update, state === "live" ? 1000 : 60_000);
 
     return () => window.clearInterval(interval);
   }, [startsAt, state]);

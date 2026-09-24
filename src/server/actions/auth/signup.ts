@@ -46,7 +46,7 @@ export async function signupAction(
       return {
         success: false,
         message: "Este handle não está disponível.",
-        fieldErrors: { handle: ["Escolha outro handle."] },
+        fieldErrors: { email: ["Escolha outro handle."] },
       };
     }
 

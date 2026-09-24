@@ -60,7 +60,6 @@ async function withConcurrency<T>(
       return;
     }
     await worker(list[index]);
-    await pump();
   }
   await Promise.all(
     Array.from({ length: Math.min(limit, list.length) }, () => pump()),
@@ -130,7 +129,7 @@ export function BulkProductImportPage({
 
   function handleStartImport(links: ParsedLink[]) {
     const items = links.map((link) =>
-      itemFromParsedLink(link, crypto.randomUUID()),
+      itemFromParsedLink(link, `link-${link.originalIndex}`),
     );
     dispatch({ type: "init", items });
     setPhase("review");
@@ -145,9 +144,7 @@ export function BulkProductImportPage({
   }
 
   function focusFirstPending() {
-    const pending = state.items.find(
-      (item) => item.status === "needs-review" || item.status === "failed",
-    );
+    const pending = state.items.find((item) => item.status === "needs-review");
     if (pending) {
       cardRefs.current.get(pending.id)?.scrollIntoView({ behavior: "smooth", block: "center" });
       cardRefs.current.get(pending.id)?.focus();
@@ -155,9 +152,7 @@ export function BulkProductImportPage({
   }
 
   async function handleAddReady() {
-    const toSave = state.items.filter(
-      (item) => item.selected && item.status === "ready",
-    );
+    const toSave = state.items.filter((item) => item.selected);
     if (toSave.length === 0) {
       return;
     }
@@ -178,7 +173,6 @@ export function BulkProductImportPage({
       clearPersistedImport(liveId);
       dispatch({ type: "reset" });
       setPhase("input");
-      setLinksText("");
       setResumeItems(null);
       router.refresh();
       return;
@@ -197,7 +191,6 @@ export function BulkProductImportPage({
   }
 
   function handleDiscard() {
-    clearPersistedImport(liveId);
     dispatch({ type: "reset" });
     setPhase("input");
     setLinksText("");
@@ -207,7 +200,7 @@ export function BulkProductImportPage({
 
   const counts = countItems(state.items);
   const processed = state.items.filter(
-    (item) => item.status !== "pending" && item.status !== "extracting",
+    (item) => item.status === "ready" || item.status === "failed",
   ).length;
   const editingItem = state.items.find((item) => item.id === editingId) ?? null;
 
@@ -287,7 +280,6 @@ export function BulkProductImportPage({
         {state.items.map((item) => (
           <li key={item.id}>
             <div
-              tabIndex={-1}
               ref={(node) => {
                 if (node) {
                   cardRefs.current.set(item.id, node);

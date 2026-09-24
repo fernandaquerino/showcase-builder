@@ -92,7 +92,7 @@ export function itemFromParsedLink(link: ParsedLink, id: string): ImportProductI
     price: null,
     imageUrl: "",
     availableSizes: [],
-    status: link.status === "already-added" ? "already-added" : "pending",
+    status: "pending",
     selected: false,
     errorMessage: null,
     manuallyEdited: false,
@@ -145,7 +145,7 @@ export function itemToFormValues(item: ImportProductItem): ProductFormValues {
     size: item.size ?? "",
     color: item.color ?? "",
     imageUrl: item.imageUrl,
-    productUrl: item.affiliateUrl,
+    productUrl: item.canonicalUrl ?? item.affiliateUrl,
     // item.price is a canonical decimal ("129.90"); the schema expects BR input
     // ("129,90"), where "." is a thousands separator. Convert before saving.
     price: canonicalPriceToInput(item.price),

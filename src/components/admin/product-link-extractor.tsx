@@ -50,14 +50,13 @@ export function ProductLinkExtractor({
   const helpId = useId();
 
   async function runExtraction() {
-    if (url.trim() === "" || state.kind === "loading") return;
+    if (url.trim() === "") return;
     setState({ kind: "loading" });
 
     try {
       const result = await requestExtraction(url);
       if (!result.success) {
         setState({ kind: "error", message: result.error.message });
-        onRevealForm();
         return;
       }
 
@@ -103,7 +102,6 @@ export function ProductLinkExtractor({
           placeholder="https://..."
           value={url}
           aria-describedby={helpId}
-          disabled={isLoading}
           className="min-h-11"
           onChange={(event) => {
             setUrl(event.target.value);
@@ -111,7 +109,6 @@ export function ProductLinkExtractor({
           }}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
-              event.preventDefault();
               void runExtraction();
             }
           }}

@@ -148,9 +148,10 @@ function cacheToResponse(
   }
 
   const metadata = cacheMetadata(cached.metadata);
+  const originalUrl = cached.sourceUrl ?? affiliateUrl;
   return successResponse({
-    affiliateUrl,
-    sourceUrl: affiliateUrl,
+    affiliateUrl: originalUrl,
+    sourceUrl: originalUrl,
     canonicalUrl: metadata.canonicalUrl,
     finalUrl: cached.finalUrl ?? cached.sourceUrl,
     sku: metadata.sku,
@@ -163,7 +164,7 @@ function cacheToResponse(
     availableSizes: metadata.availableSizes,
     fieldsFound: fieldsFoundFrom({ ...cached, metadata }),
     extractionSource: (cached.extractionSource ?? "meta") as ExtractionSource,
-    completeness: cached.status === "partial" ? "partial" : "complete",
+    completeness: cached.name && cached.price ? "complete" : "partial",
     fromCache: true,
   });
 }

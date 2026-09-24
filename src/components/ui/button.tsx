@@ -129,7 +129,7 @@ export function Button({
     <button
       type={type ?? "button"}
       className={classes}
-      disabled={disabled || loading}
+      disabled={disabled}
       aria-busy={loading || undefined}
       data-loading={loading || undefined}
       {...props}

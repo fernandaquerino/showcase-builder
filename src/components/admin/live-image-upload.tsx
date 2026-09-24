@@ -83,6 +83,7 @@ export function LiveImageUpload({
       const url = await uploadFile(file);
       onChange(url);
       setState({ kind: "success" });
+      onUploadingChange?.(false);
     } catch (uploadError) {
       setState({
         kind: "error",
@@ -91,18 +92,11 @@ export function LiveImageUpload({
             ? uploadError.message
             : COVER_IMAGE_MESSAGES.uploadFailed,
       });
-    } finally {
-      onUploadingChange?.(false);
-      // Allow re-selecting the same file after an error.
-      if (inputRef.current) {
-        inputRef.current.value = "";
-      }
     }
   }
 
   function handleRemove() {
     onChange(null);
-    setState({ kind: "idle" });
   }
 
   return (

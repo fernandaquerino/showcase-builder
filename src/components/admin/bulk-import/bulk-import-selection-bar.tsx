@@ -28,7 +28,7 @@ export function BulkImportSelectionBar({
           variant="ghost"
           size="sm"
           onClick={onSelectAllReady}
-          disabled={disabled || ready === 0 || selected === ready}
+          disabled={disabled || ready === 0 || selected > 0}
           className="min-h-11"
         >
           Selecionar todos os prontos

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, ne, sql } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 
 import type { LiveThemeConfig } from "@/lib/live-theme";
 import type { LiveFormData } from "@/lib/validations/live";
@@ -9,16 +9,13 @@ import { lives } from "@/server/db/schema";
 
 export type Live = typeof lives.$inferSelect;
 
-/**
- * Lists the lives owned by a user, published one first, then by most recently
- * updated.
- */
+/** Lists the lives owned by a user, most recently updated first. */
 export async function getLivesByUserId(userId: string): Promise<Live[]> {
   return db
     .select()
     .from(lives)
     .where(eq(lives.userId, userId))
-    .orderBy(sql`${lives.status} = 'published' desc`, desc(lives.updatedAt));
+    .orderBy(desc(lives.updatedAt));
 }
 
 /** Fetches a single live, scoped to its owner. */
@@ -119,7 +116,7 @@ export async function publishLive(
         and(
           eq(lives.userId, userId),
           eq(lives.status, "published"),
-          ne(lives.id, liveId),
+          eq(lives.id, liveId),
         ),
       ),
     db

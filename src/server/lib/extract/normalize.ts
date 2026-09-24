@@ -71,7 +71,7 @@ export function normalizeExtractedPrice(
 
   if (hasComma && hasDot) {
     decimal =
-      cleaned.lastIndexOf(",") > cleaned.lastIndexOf(".")
+      cleaned.lastIndexOf(",") < cleaned.lastIndexOf(".")
         ? cleaned.replace(/\./g, "").replace(/,/g, ".")
         : cleaned.replace(/,/g, "");
   } else if (hasComma) {
@@ -108,17 +108,11 @@ function pickExtractionSource(
 }
 
 function normalizeSizes(sizes: string[]): string[] {
-  const seen = new Set<string>();
   const normalized: string[] = [];
 
   for (const size of sizes) {
     const cleaned = cleanText(size, LIMITS.size);
-    if (!cleaned) continue;
-    const key = cleaned.toLocaleLowerCase("pt-BR");
-    if (!seen.has(key)) {
-      seen.add(key);
-      normalized.push(cleaned);
-    }
+    if (cleaned) normalized.push(cleaned);
   }
 
   return normalized.slice(0, 30);

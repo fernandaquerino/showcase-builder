@@ -49,7 +49,11 @@ export function UserMenu({ name, email, image }: UserMenuProps) {
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild className="cursor-pointer gap-2">
+        <DropdownMenuItem
+          asChild
+          className="cursor-pointer gap-2"
+          onSelect={(event) => event.preventDefault()}
+        >
           <Link href="/admin/appearance">
             <Palette className="size-4" aria-hidden="true" />
             Aparência da vitrine

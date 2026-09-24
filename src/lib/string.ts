@@ -39,5 +39,8 @@ export function capitalizeFirst(value: string): string {
     return "";
   }
 
-  return normalized.charAt(0).toLocaleUpperCase("pt-BR") + normalized.slice(1);
+  return (
+    normalized.charAt(0).toLocaleUpperCase("pt-BR") +
+    normalized.slice(1).toLocaleLowerCase("pt-BR")
+  );
 }

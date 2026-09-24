@@ -26,9 +26,9 @@ export function SheetContent({
         className={cn(
           "fixed z-50 flex flex-col gap-4 bg-card p-6 text-card-foreground shadow-lg",
           "inset-0 sm:inset-y-0 sm:right-0 sm:left-auto sm:h-full sm:w-full sm:max-w-md sm:border-l",
-          "overflow-y-auto",
           className,
         )}
+        onOpenAutoFocus={(event) => event.preventDefault()}
         {...props}
       >
         {children}

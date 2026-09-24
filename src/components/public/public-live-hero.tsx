@@ -61,7 +61,7 @@ export function PublicLiveHero({
     ? getCountdownParts(startsAt)
     : { days: 0, hours: 0, minutes: 0, seconds: 0 };
   const time = formatLiveTime(live?.liveTime ?? null);
-  const hasCover = Boolean(live?.coverImageUrl) && theme.heroStyle !== "clean";
+  const hasCover = Boolean(live?.coverImageUrl) && theme.heroStyle !== "overlay";
 
   return (
     <header className="relative isolate overflow-hidden bg-[var(--live-primary)] text-[var(--live-primary-foreground)] shadow-sm">

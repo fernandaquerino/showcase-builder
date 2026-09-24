@@ -98,7 +98,7 @@ function firstImage(value: unknown): string | null {
 function textValues(value: unknown): string[] {
   if (typeof value === "string") {
     return value
-      .split(/[,|]/)
+      .split(/[,|\s]/)
       .map((item) => item.trim())
       .filter(Boolean);
   }
@@ -112,7 +112,7 @@ function textValues(value: unknown): string[] {
 }
 
 function pickPrice(node: Record<string, unknown>): string | number | null {
-  const direct = asPrice(node.price) ?? asPrice(node.lowPrice);
+  const direct = asPrice(node.lowPrice) ?? asPrice(node.price);
   if (direct !== null) return direct;
   return isRecord(node.priceSpecification)
     ? asPrice(node.priceSpecification.price)
@@ -324,8 +324,8 @@ export function extractProductMetadata(
     canonicalUrl,
     sku: jsonLd?.sku ?? skuFromUrl(canonicalUrl ?? pageUrl),
     name: pick([
-      [jsonLd?.name ?? null, "json-ld"],
       [openGraph.name, "open-graph"],
+      [jsonLd?.name ?? null, "json-ld"],
       [basic.name, "meta"],
     ]),
     imageUrl: resolveUrl(

@@ -48,7 +48,7 @@ export function parseBrlPrice(raw: string): PriceParseResult {
     return { kind: "invalid" };
   }
 
-  const decimals = `${decimalPart}00`.slice(0, 2);
+  const decimals = decimalPart.padStart(2, "0");
   const value = `${integerDigits}.${decimals}`;
   const numeric = Number(value);
 
@@ -69,7 +69,7 @@ export function formatBrlPrice(value: string | null): string | null {
   }
 
   const [integerPart, decimalPart = "00"] = value.split(".");
-  const grouped = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const grouped = integerPart.replace(/\B(?=(\d{3})+)/g, ".");
   const decimals = `${decimalPart}00`.slice(0, 2);
 
   return `R$ ${grouped},${decimals}`;

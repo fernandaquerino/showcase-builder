@@ -22,11 +22,9 @@ type ProductImageProps = {
  * prevents layout shift and an `onError` fallback keeps the card intact.
  */
 export function ProductImage({ src, alt, className }: ProductImageProps) {
-  // Track the source that failed instead of a boolean, so changing `src` (e.g.
-  // during the live form preview) clears the fallback without an effect.
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
-  const showFallback = !src || failedSrc === src;
+  const showFallback = !src || failedSrc !== null;
 
   return (
     <div

@@ -66,13 +66,7 @@ export function bulkImportReducer(
     case "edit":
       return mapItem(state, action.id, (item) => {
         const next = { ...item, ...action.patch, manuallyEdited: true };
-        const status = statusForItem(next);
-        return {
-          ...next,
-          status,
-          // Becoming ready after a manual fix selects it for saving.
-          selected: status === "ready" ? true : next.selected,
-        };
+        return { ...next, status: statusForItem(next) };
       });
 
     case "setSize":
@@ -87,21 +81,21 @@ export function bulkImportReducer(
 
     case "toggleSelected":
       return mapItem(state, action.id, (item) =>
-        item.status === "ready" || !action.selected
-          ? { ...item, selected: action.selected }
-          : item,
+        item.status === "ready" ? { ...item, selected: action.selected } : item,
       );
 
     case "selectAllReady":
       return {
         items: state.items.map((item) =>
-          item.status === "ready" ? { ...item, selected: true } : item,
+          item.status !== "failed" ? { ...item, selected: true } : item,
         ),
       };
 
     case "clearSelection":
       return {
-        items: state.items.map((item) => ({ ...item, selected: false })),
+        items: state.items.map((item) =>
+          item.status === "ready" ? { ...item, selected: false } : item,
+        ),
       };
 
     case "markSaving":
@@ -117,7 +111,7 @@ export function bulkImportReducer(
           action.ids.includes(item.id)
             ? {
                 ...item,
-                status: statusForItem({ ...item, status: "ready" }),
+                status: statusForItem(item),
                 errorMessage: action.message,
               }
             : item,

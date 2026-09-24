@@ -31,7 +31,7 @@ export function ProductImportPreviewCard({
   const sizeId = useId();
   const selectId = useId();
   const price = formatBrlPrice(item.price);
-  const isBusy = item.status === "extracting" || item.status === "saving";
+  const isBusy = item.status === "extracting";
   const isFailed = item.status === "failed";
   const canSelect = item.status === "ready";
 
@@ -100,10 +100,10 @@ export function ProductImportPreviewCard({
         </div>
       ) : (
         <div className="space-y-1">
-          <Label htmlFor={sizeId}>Tamanho usado na live</Label>
+          <Label htmlFor={selectId}>Tamanho usado na live</Label>
           <Input
             id={sizeId}
-            value={item.size ?? ""}
+            defaultValue={item.size ?? ""}
             onChange={(event) => onSizeChange(event.target.value)}
             placeholder="Ex.: M"
             disabled={isBusy}
